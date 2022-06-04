@@ -1,5 +1,5 @@
 
-import React, { useRef, useEffect } from 'react'
+import React from 'react'
 
 enum Tools {
 	Pencil = 'Pencil',
@@ -7,132 +7,89 @@ enum Tools {
 	Line = 'Line'
 }
 
+interface IMousePosition {
+	x: number,
+	y: number
+}
+
 const Canvas: React.FC = () => {
 
-	const canvasRef = useRef<HTMLCanvasElement>(null);
-	const contextRef = useRef<CanvasRenderingContext2D>(null);
+	const canvasRef = React.useRef<HTMLCanvasElement>(null);
+	const contextRef = React.useRef<CanvasRenderingContext2D | null>(null);
 
 	const [currentTool, setCurrentTool] = React.useState<Tools>(Tools.Pencil);
 	const [color, setColor] = React.useState<string>('black');
-	const [toolSize, setToolSize] = React.useState<number>(5);
+	const [toolSize, setToolSize] = React.useState<number>(15);
 	const [currentlyUsingTool, setCurrentlyUsingTool] = React.useState<boolean>(false);
 	const [isErasing, setIsErasing] = React.useState<boolean>(false);
 	const [lineCap, setLineCap] = React.useState<CanvasLineCap>('square');
+	const [scale, setScale] = React.useState<number>(0);
+	const [mousePosition, setMousePosition] = React.useState<IMousePosition>({ x: 0, y: 0 });
 
-	useEffect(() => {
+	React.useEffect(() => {
 		initaliseCanvas();
 	}, []);
 
-	useEffect(() => {
-		if (currentTool !== Tools.Eraser && isErasing) {
-			finishErasing();
-		}
-	}, [currentTool]);
-
 	const initaliseCanvas = () => {
+
+		const CANVAS_WIDTH = 12;
+		const CANVAS_HEIGHT = 12;
+		const scale = Math.floor(window.innerWidth / (CANVAS_WIDTH * 2.5));
 		const canvas = canvasRef.current;
-		contextRef.current = canvas.getContext('2d');
-		canvas.height = 200;
-		canvas.width = 400;
-		canvas.style.height = '200px';
-		canvas.style.width = '400px';
-		canvas.style.cursor = 'crosshair';
+
+		if (!canvas) return;
+
+		canvas.width = CANVAS_WIDTH * scale;
+		canvas.height = CANVAS_HEIGHT * scale;
+		canvas.style.width = `${CANVAS_WIDTH * scale}px`
+		canvas.style.height = `${CANVAS_HEIGHT * scale}px`
 		canvas.style.border = 'solid 1px black';
-		canvas.style.backgroundColor = 'white';
-		contextRef.current.lineCap = lineCap;
-		contextRef.current.strokeStyle = color;
-		contextRef.current.lineWidth = toolSize;
+		canvas.style.cursor = 'crosshair';
+
+		contextRef.current = canvas.getContext('2d');
+
+		if (!contextRef?.current) return;
+
+		canvas.style.backgroundColor = 'cyan';
+		// contextRef.current.lineCap = lineCap;
+		// contextRef.current.strokeStyle = color;
+		contextRef.current.lineWidth = 1 * scale;
+		setScale(scale);
 	}
 
-	const startUsingTool = (tool: Tools, e: React.MouseEvent<HTMLCanvasElement>): void => {
-		switch (tool) {
-			case Tools.Pencil:
-				startDrawing(e);
-				break;
-			case Tools.Eraser:
-				startErasing(e);
-				break;
-			case Tools.Line:
-				startDrawingLine(e);
-				break;
-			default:
-				startDrawing(e);
-		}
-	}
 
-	const finishUsingTool = (tool: Tools): void => {
-		switch (tool) {
-			case Tools.Pencil:
-				finishDrawing();
-				break;
-			case Tools.Eraser:
-				finishErasing();
-				break;
-			case Tools.Line:
-				finishDrawing();
-				break;
-			default:
-				finishDrawing();
-		}
-	}
 
-	const brushStroke = ({ nativeEvent: { offsetX, offsetY } }: React.MouseEvent<HTMLCanvasElement>) => {
+	const drawOrErase = (e: React.MouseEvent<HTMLCanvasElement>, dot?: boolean): void => {
+		if ((!dot && !currentlyUsingTool) || !canvasRef?.current || !contextRef?.current) return;
+
+		let rect = canvasRef.current.getBoundingClientRect();
+
+		const currentX = Math.floor((e.clientX - rect.left) / scale) * scale;
+		const currentY = Math.floor((e.clientY - rect.top) / scale) * scale;
+
 		contextRef.current.beginPath();
-		contextRef.current.moveTo(offsetX, offsetY);
-		contextRef.current.lineTo(offsetX, offsetY);
-		contextRef.current.stroke();
+		contextRef.current.fillStyle = isErasing ? canvasRef.current.style.backgroundColor : color;
+		contextRef.current.fillRect(currentX, currentY, 1 * scale, 1 * scale);
+		contextRef.current.fill();
 	}
-
-	const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>): void => {
-		contextRef.current.strokeStyle = color;
-		brushStroke(e);
-		setCurrentlyUsingTool(true);
-	};
-
-	const startErasing = (e: React.MouseEvent<HTMLCanvasElement>): void => {
-		contextRef.current.strokeStyle = canvasRef.current.style.backgroundColor
-		brushStroke(e)
-		setCurrentlyUsingTool(true);
-	};
-
-	const finishDrawing = (): void => {
-		contextRef.current.closePath();
-		setCurrentlyUsingTool(false);
-	};
-
-	const finishErasing = () => {
-		contextRef.current.strokeStyle = color;
-		setCurrentlyUsingTool(false);
-	};
-
-
-	const draw = ({ nativeEvent: { offsetX, offsetY } }: React.MouseEvent<HTMLCanvasElement>): void => {
-		if (!currentlyUsingTool) return;
-
-		contextRef.current.lineTo(offsetX, offsetY);
-		contextRef.current.stroke();
-	};
-
-	const startDrawingLine = ({ nativeEvent: { offsetX, offsetY } }: React.MouseEvent<HTMLCanvasElement>): void => { };
-	const finishDrawingLine = () => { };
 
 	const clearCanvas = () => {
+		if (!contextRef?.current || !canvasRef?.current) return;
 		contextRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 	}
 
-
 	return (
 		<>
-			<button onClick={() => setCurrentTool(Tools.Pencil)}>pencil</button>
-			<button onClick={() => setCurrentTool(Tools.Eraser)}>eraser</button>
-			<button onClick={() => setCurrentTool(Tools.Line)}>Line</button>
-			<button onClick={clearCanvas}>Clear</button>
+			<button onClick={() => setIsErasing(false)}>pencil</button>
+			<button onClick={() => setIsErasing(true)}>eraser</button>
+			<button onClick={clearCanvas}>clear</button>
 
 			<canvas
 				ref={canvasRef}
-				onMouseDown={(e) => startUsingTool(currentTool, e)}
-				onMouseMove={draw}
-				onMouseUp={() => finishUsingTool(currentTool)}
+				onMouseDown={(e) => { setCurrentlyUsingTool(true); drawOrErase(e, true) }}
+				onMouseMove={drawOrErase}
+
+				onMouseUp={() => setCurrentlyUsingTool(false)}
 				onMouseLeave={() => setCurrentlyUsingTool(false)}
 			/>
 		</>
@@ -156,3 +113,4 @@ export default Canvas;
 
 // const zoomIn = () => { };
 // const zoomOut = () => { };
+
