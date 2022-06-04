@@ -1,11 +1,16 @@
-Store
-walletConnected
-walletAddress
+Next:
 
-tool 
-tool size
-tool color
+Touch move for mobile
+check out mobile ratios just in case theres anything which needs to go in store 
+redux setup
+show color picker
+color picker 
+current color
+scale
+bg color
+scale init
 
+test canvas to svg converters
 
-Tool Layout
-- 
+Draw straight line
+Draw circle
