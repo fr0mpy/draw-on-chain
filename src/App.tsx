@@ -1,13 +1,12 @@
 import Canvas from "./Components/Common/Canvas";
-import InitializePixelSize from './Components/Common/InitializePixelSize';
+// import InitializePixelSize from './Components/Common/InitializePixelSize';
 
 import * as React from 'react';
 
 function App() {
-	const [pixelSizeInitialzed, setPixelSizeInitialized] = React.useState(false);
 	return (
 		<div className="App">
-			{/* {!pixelSizeInitialzed ? <InitializePixelSize /> : <Canvas />} */}
+			<h1>Draw On Chain (Beta)</h1>
 			<Canvas />
 		</div>
 	);

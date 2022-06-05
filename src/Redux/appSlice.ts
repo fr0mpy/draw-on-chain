@@ -1,34 +1,62 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
-export interface CounterState {
-	value: number
+export interface IAppState {
+	value: number;
+	height: number;
+	width: number;
+	pencilColor: string;
+	backgroundColor: string;
+	showPencilColorPicker: boolean;
+	showBackgroundColorPicker: boolean;
+
 }
 
-const initialState: CounterState = {
+export const initialState: IAppState = {
 	value: 0,
+	height: 22,
+	width: 22,
+	pencilColor: '#000001',
+	backgroundColor: '#FFFFFF',
+	showPencilColorPicker: false,
+	showBackgroundColorPicker: false
 }
 
-export const counterSlice = createSlice({
+export const appSlice = createSlice({
 	name: 'counter',
 	initialState,
 	reducers: {
-		increment: (state) => {
-			// Redux Toolkit allows us to write "mutating" logic in reducers. It
-			// doesn't actually mutate the state because it uses the Immer library,
-			// which detects changes to a "draft state" and produces a brand new
-			// immutable state based off those changes
-			state.value += 1
+		updateCanvasHeight: (state, action: PayloadAction<number>) => {
+			state.height = action.payload;
 		},
-		decrement: (state) => {
-			state.value -= 1
+		updateCanvasWidth: (state, action: PayloadAction<number>) => {
+			state.width = action.payload;
 		},
-		incrementByAmount: (state, action: PayloadAction<number>) => {
-			state.value += action.payload
+		updatePencilColor: (state, action: PayloadAction<string>) => {
+			state.pencilColor = action.payload;
+		},
+		updateBackgroundColor: (state, action: PayloadAction<string>) => {
+			state.backgroundColor = action.payload;
+		},
+		showPencilColorPicker: (state, action: PayloadAction<boolean>) => {
+			state.showPencilColorPicker = action.payload;
+			state.showBackgroundColorPicker = false;
+
+		},
+		showBackgroundColorPicker: (state, action: PayloadAction<boolean>) => {
+			state.showBackgroundColorPicker = action.payload;
+			state.showPencilColorPicker = false;
+
 		},
 	},
 })
 
-// Action creators are generated for each case reducer function
-export const { increment, decrement, incrementByAmount } = counterSlice.actions
+export const {
+	updateCanvasHeight,
+	updateCanvasWidth,
+	updatePencilColor,
+	updateBackgroundColor,
+	showPencilColorPicker,
+	showBackgroundColorPicker
+} = appSlice.actions;
 
-export default counterSlice.reducer
+export default appSlice.reducer;
