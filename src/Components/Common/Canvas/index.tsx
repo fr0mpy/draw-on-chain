@@ -2,12 +2,12 @@
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux';
 import { showPencilColorPicker } from '../../../Redux/appSlice';
-import { BackgroundColorPicker } from '../../BackgroundColorPicker';
 import { PencilColorPicker } from '../PencilColorPicker';
 import FloodFill from 'q-floodfill'
 import { getPixelHexCode } from '../../../helpers/colors';
 import { load, save } from '../../../helpers/localStorage';
 import { pixelAlreadyDrawnOn } from '../../../helpers/canvas';
+import { Tools } from '../../../enums/tools';
 
 
 const Canvas: React.FC = () => {
@@ -102,26 +102,26 @@ const Canvas: React.FC = () => {
 		contextRef.current?.putImageData(paths[paths.length - 1], 0, 0);
 	}
 
-	const onButtonClick = (buttonName: string) => {
-		switch (buttonName) {
-			case 'pencil':
+	const onButtonClick = (tool: Tools) => {
+		switch (tool) {
+			case Tools.Pencil:
 				setIsErasing(false);
 				setIsFlooding(false)
 				break;
-			case 'eraser':
+			case Tools.Eraser:
 				setIsErasing(true);
 				setIsFlooding(false)
 				break;
-			case 'fill':
+			case Tools.Fill:
 				setIsFlooding(!isFlooding)
 				break;
-			case 'undo':
+			case Tools.Undo:
 				undo();
 				break;
-			case 'clear-all':
+			case Tools.Clear:
 				clearCanvas();
 				break;
-			case 'color':
+			case Tools.Color:
 				dispatch(showPencilColorPicker(!pencilColorPickerOpen))
 				break;
 			default:
@@ -159,12 +159,12 @@ const Canvas: React.FC = () => {
 	return (
 		<div style={{ display: 'flex', flexFlow: 'column' }}>
 			<div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
-				<button onClick={() => onButtonClick('pencil')}>pencil</button>
-				<button onClick={() => onButtonClick('eraser')}>eraser</button>
-				<button onClick={() => onButtonClick('fill')}>fill</button>
-				<button onClick={() => onButtonClick('undo')}>undo</button>
-				<button onClick={() => onButtonClick('clear-all')}>clear all</button>
-				<button onClick={() => onButtonClick('color')}>color</button>
+				<button onClick={() => onButtonClick(Tools.Pencil)}>pencil</button>
+				<button onClick={() => onButtonClick(Tools.Eraser)}>eraser</button>
+				<button onClick={() => onButtonClick(Tools.Fill)}>fill</button>
+				<button onClick={() => onButtonClick(Tools.Undo)}>undo</button>
+				<button onClick={() => onButtonClick(Tools.Clear)}>clear all</button>
+				<button onClick={() => onButtonClick(Tools.Color)}>color</button>
 				<span
 					onClick={() => dispatch(showPencilColorPicker(!pencilColorPickerOpen))}
 					style={{ height: '22px', width: '22px', boxSizing: 'border-box', margin: '0 2px', border: 'solid 4px black', display: 'inline-block', backgroundColor: pencilColor }}
