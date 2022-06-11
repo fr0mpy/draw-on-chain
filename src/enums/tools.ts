@@ -5,5 +5,6 @@ export enum Tools {
 	Fill = 'fill',
 	Undo = 'undo',
 	Clear = 'clear',
-	Color = 'color'
+	Color = 'color',
+	Line = 'line'
 }
