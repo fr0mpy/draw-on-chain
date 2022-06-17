@@ -1,14 +1,11 @@
 import React from 'react';
 import { SketchPicker } from 'react-color';
-import { useDispatch, useSelector } from 'react-redux';
-import { updatePencilColor } from '../../../Redux/appSlice';
 
+interface IProps {
+	color: any;
+	setColor(color: any): void;
+}
 
-export const PencilColorPicker = () => {
-	const dispatch = useDispatch();
-	const color = useSelector((state: any) => {
-		return state.app.pencilColor;
-	});
-
-	return <SketchPicker color={color} onChange={(color) => dispatch(updatePencilColor(color.hex))} />;
+export const ColorPicker: React.FC<IProps> = ({ color, setColor }) => {
+	return <SketchPicker color={color} onChange={(color) => setColor(color.hex)} />;
 }
