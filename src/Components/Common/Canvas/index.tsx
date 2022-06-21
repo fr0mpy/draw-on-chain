@@ -9,10 +9,16 @@ import { load, save } from '../../../helpers/localStorage';
 import { pixelAlreadyDrawnOn } from '../../../helpers/canvas';
 import { Tools } from '../../../enums/tools';
 import { fabric } from 'fabric';
+import { render } from '@testing-library/react';
+import { usePrevious } from '../../../hooks/usePrevious';
+import 'fabric-history';
+
 
 const Canvas: React.FC = () => {
 
 	const canvasRef = React.useRef<fabric.Canvas | null>(null);
+	const objRef = React.useRef<fabric.Line | null>(null);
+
 	const [tool, setTool] = React.useState<string>('draw');
 	const [mouseDown, setMouseDown] = React.useState<boolean>(false);
 	const [drawing, setDrawing] = React.useState<boolean>(false);
@@ -21,15 +27,14 @@ const Canvas: React.FC = () => {
 	const [brushWidth, setBrushWidth] = React.useState<number>(4);
 	const [walletConnected, setWalletConnected] = React.useState<boolean>(false);
 	const [walletAddress, setWalletAddress] = React.useState<string>('');
+	const [line, setLine] = React.useState<fabric.Line>();
+	const [isDrawingMode, setDrawingMode] = React.useState<boolean>(true);
 
 
 	React.useEffect(() => {
+		setCanvas();
+	}, [canvasRef, tool]);
 
-		if (!canvasRef.current) {
-			initCanvas();
-		}
-		canvasRef.current?.renderAll();
-	}, [canvasRef]);
 
 	const connectWallet = () => {
 
@@ -40,7 +45,6 @@ const Canvas: React.FC = () => {
 				(window as any).userWalletAddress = account;
 				setWalletConnected(true);
 				setWalletAddress(account);
-				// getTotalMinted();
 				console.log('3')
 
 			});
@@ -50,23 +54,50 @@ const Canvas: React.FC = () => {
 
 	}
 
-	const initCanvas = () => {
-		canvasRef.current = new fabric.Canvas('canvas', { width: 640, height: 640, backgroundColor: 'cyan' });
-		canvasRef.current.renderAll();
-		canvasRef.current.freeDrawingBrush.width = brushWidth;
+	const setCanvas = () => {
+		if (!canvasRef.current) {
+			canvasRef.current = new fabric.Canvas('canvas', { width: 640, height: 640, backgroundColor: 'white' });
 
-		canvasRef.current.on('mouse:down', () => {
+			canvasRef.current.renderAll();
+
+		}
+		canvasRef.current.freeDrawingBrush.width = brushWidth;
+		canvasRef.current.freeDrawingBrush.color = brushColor;
+		canvasRef.current.isDrawingMode = isDrawingMode;
+
+		canvasRef.current.on('mouse:down', (e) => {
 			setMouseDown(true);
 
+			if (!canvasRef.current) return;
+
+			switch (tool) {
+				case 'line':
+					if (!e.pointer) return;
+
+					objRef.current = new fabric.Line(
+						[e.pointer?.x, e.pointer?.y, e.pointer?.x + 100, e.pointer.y + 100],
+						{ stroke: brushColor, strokeWidth: brushWidth }
+					)
+					canvasRef.current.add(objRef.current);
+					break;
+				default:
+					return;
+			}
+
 		});
-		canvasRef.current.on('mouse:move', () => {
+		canvasRef.current.on('mouse:move', (e) => {
 			if (!mouseDown) return;
 
 			switch (tool) {
 				case 'draw':
 					if (!canvasRef.current) return;
-					canvasRef.current.renderAll();
-					canvasRef.current.isDrawingMode = true;
+					// canvasRef.current.isDrawingMode = true;
+					// canvasRef.current.renderAll();
+					break;
+				case 'erase':
+					if (!canvasRef.current) return;
+					// canvasRef.current.isDrawingMode = true;
+					// canvasRef.current.renderAll();
 					break;
 				default:
 					if (!canvasRef.current) return;
@@ -90,18 +121,19 @@ const Canvas: React.FC = () => {
 		setBrushWidth(width)
 	}
 
-	const setDrawingMode = () => {
+	const handleDraw = () => {
+
 		if (!canvasRef.current) return;
 
-		if (canvasRef.current.isDrawingMode === true) {
-			canvasRef.current.isDrawingMode = false;
-			setDrawing(false);
+		if (tool === 'draw') {
+			setDrawingMode(false);
+			setTool('')
 		}
 
 		else {
-			canvasRef.current.isDrawingMode = true;
-			setDrawing(true);
-
+			setDrawingMode(true);
+			setBrushColor('black');
+			setTool('draw');
 		}
 	}
 
@@ -115,39 +147,71 @@ const Canvas: React.FC = () => {
 		})
 	}
 
-	const handleLine = () => {
-		setTool('line');
+	const handleToSVG = () => {
+		if (!canvasRef.current) return;
+
+		console.log('svg', canvasRef.current.toSVG());
+	}
+
+	const handleErase = () => {
+
+		if (!canvasRef.current) return;
+
+		if (tool === 'erase') {
+			setDrawingMode(false);
+			setTool('');
+			setBrushColor('black');
+		}
+
+		else {
+			setDrawingMode(true);
+			setTool('erase')
+			setBrushColor('white')
+		}
+	}
+
+	const handleUndo = () => {
+		if (!canvasRef.current) return;
+		(canvasRef.current as any).undo();
+	}
+
+	const handleRedo = () => {
+		if (!canvasRef.current) return;
+		(canvasRef.current as any).redo();
 	}
 
 	/**
-	 * color fill
-	 * line
 	 * choose bg color
-	 * erase
-	 * clear all
-	 * undo
 	 * add image?
-	 * reset canvas
 	 */
+
+	const tempDrawBtnStyle = { color: tool === 'draw' ? 'white' : 'black', backgroundColor: tool === 'draw' ? 'black' : 'white' }
+	const tempEraseBtnStyle = { color: tool === 'erase' ? 'white' : 'black', backgroundColor: tool === 'erase' ? 'black' : 'white' }
 
 	return (
 		<>
 			<button onClick={connectWallet}>connect</button>
-			<p>{walletConnected && `Connnected as ${walletAddress.slice(0, 10)}...`}</p>
+			<p>{walletConnected && `Connected as ${walletAddress.slice(0, 10)}...`}</p>
 			<div>
-				<button onClick={setDrawingMode} style={{ color: drawing ? 'white' : 'black', backgroundColor: drawing ? 'black' : 'white' }}>draw</button>
+				<button onClick={handleDraw} style={tempDrawBtnStyle}>draw</button>
 				<button onClick={() => setColorPicker(!colorPicker)}>color</button>
 				<label>
 					brush width
-					<input type="range" min={0} value={brushWidth} onChange={(e) => handleBrushWidth(Number(e.target.value))} />
-					<input type="number" min={0} max={100} value={brushWidth} onChange={(e) => handleBrushWidth(Number(e.target.value))} />
+					<input type="range" min={1} max={100} value={brushWidth} onChange={(e) => handleBrushWidth(Number(e.target.value))} />
+					<input type="number" min={1} max={100} value={brushWidth} onChange={(e) => handleBrushWidth(Number(e.target.value))} />
 				</label>
 				<button onClick={handleClear}> clear </button>
-				<button onClick={handleLine}> Line </button>
+				<button onClick={handleErase} style={tempEraseBtnStyle}> erase</button>
+				<button onClick={handleToSVG}> to SVG </button>
+				<button onClick={handleUndo}> undo </button>
+				<button onClick={handleRedo}> redo </button>
+
 
 			</div>
 			<br />
-			<canvas id={'canvas'} style={{ border: 'solid 4px black' }} />
+			<div style={{ border: 'solid 4px black', height: 640, width: 640 }}>
+				<canvas id={'canvas'} />
+			</div>
 			{<ColorPicker setColor={handleBrushColor} color={brushColor} />}
 			<p>hw</p>
 		</>
