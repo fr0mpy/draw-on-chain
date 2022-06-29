@@ -10,6 +10,8 @@ const Canvas: React.FC = () => {
 
 	const canvasRef = React.useRef<fabric.Canvas | null>(null);
 	const objRef = React.useRef<fabric.Line | fabric.Triangle | fabric.Circle | fabric.Rect | null>(null);
+	const objOriginRef = React.useRef<{ x: number, y: number }>({ x: 0, y: 0 });
+
 	const mousedownRef = React.useRef<boolean>(false);
 	const drawingObjRef = React.useRef<boolean>(false);
 
@@ -21,6 +23,8 @@ const Canvas: React.FC = () => {
 	const [walletAddress, setWalletAddress] = React.useState<string>('');
 	const [isDrawingMode, setDrawingMode] = React.useState<boolean>(true);
 	const [objectSelection, setObjectSelection] = React.useState<boolean>(false);
+	const [shapeFill, setShapeFill] = React.useState<boolean>(true);
+
 
 	React.useEffect(() => {
 		if (!canvasRef.current) return;
@@ -31,7 +35,7 @@ const Canvas: React.FC = () => {
 
 	React.useEffect(() => {
 		setCanvas();
-	}, [canvasRef, tool, brushWidth, brushColor, objectSelection]);
+	}, [canvasRef, tool, brushWidth, brushColor, objectSelection, shapeFill]);
 
 	const connectWallet = () => {
 
@@ -74,24 +78,25 @@ const Canvas: React.FC = () => {
 
 					objRef.current = new fabric.Line(
 						[e.pointer?.x, e.pointer?.y, e.pointer?.x, e.pointer.y],
-						{ stroke: brushColor, strokeWidth: brushWidth, selectable: objectSelection, evented: objectSelection }
+						{ stroke: brushColor, strokeWidth: brushWidth, selectable: objectSelection, evented: objectSelection, fill: shapeFill ? brushColor : '' }
 					)
 					canvasRef.current.add(objRef.current);
 					canvasRef.current.renderAll();
 					break;
 				case 'circle':
-					if (!e.pointer || !drawingObjRef.current) return;
+					if (!e.pointer || !drawingObjRef.current || !objOriginRef.current) return;
 					canvasRef.current.selection = objectSelection;
+					objOriginRef.current = { x: e.pointer.x, y: e.pointer.y };
 
 					objRef.current = new fabric.Circle(
 						{
-							left: e.pointer.x,
-							top: e.pointer.y,
+							left: objOriginRef.current.x,
+							top: objOriginRef.current.y,
 							originX: 'left',
 							originY: 'top',
-							radius: e.pointer.x,
+							radius: e.pointer.x - objOriginRef.current.x,
 							angle: 0,
-							fill: '',
+							fill: shapeFill ? brushColor : '',
 							stroke: brushColor,
 							strokeWidth: brushWidth,
 							selectable: objectSelection,
@@ -111,6 +116,7 @@ const Canvas: React.FC = () => {
 
 		canvasRef.current.on('mouse:move', (e) => {
 			if (!mousedownRef.current) return;
+
 			switch (tool) {
 				case 'draw':
 					break;
@@ -126,6 +132,27 @@ const Canvas: React.FC = () => {
 					canvasRef.current.renderAll();
 					break;
 				case 'circle':
+					if (!canvasRef.current || !e.pointer || !objRef.current) return;
+
+					let radius = Math.abs(objOriginRef.current.y - e.pointer.y) / 2;
+					if (objRef.current.strokeWidth && radius > objRef.current.strokeWidth) {
+						radius -= objRef.current.strokeWidth / 2;
+					}
+
+					(objRef.current as fabric.Circle).set({ radius: radius });
+
+					if (objOriginRef.current.x > e.pointer.x) {
+						(objRef.current as fabric.Circle).set({ originX: 'right' });
+					} else {
+						(objRef.current as fabric.Circle).set({ originX: 'left' });
+					}
+					if (objOriginRef.current.y > e.pointer.y) {
+						(objRef.current as fabric.Circle).set({ originY: 'bottom' });
+					} else {
+						(objRef.current as fabric.Circle).set({ originY: 'top' });
+					}
+
+					canvasRef.current.renderAll();
 					break;
 				case 'select':
 					break;
@@ -328,6 +355,7 @@ const Canvas: React.FC = () => {
 	};
 
 	const tempDrawBtnStyle = (toolName: string) => { return { color: tool === toolName ? 'white' : 'black', backgroundColor: tool === toolName ? 'black' : 'white' } }
+	const tempShapeFillBtnStyle = (fill: boolean) => { return { color: fill === shapeFill ? 'white' : 'black', backgroundColor: fill === shapeFill ? 'black' : 'white' } }
 
 	return (
 		<>
@@ -351,6 +379,8 @@ const Canvas: React.FC = () => {
 				<button onClick={handleCircle} style={tempDrawBtnStyle('circle')}> circle </button>
 				<button onClick={handleSquare} style={tempDrawBtnStyle('square')}> square </button>
 				<button onClick={handleObjSelection} style={tempDrawBtnStyle('select')}> select</button>
+				<button onClick={() => setShapeFill(false)} style={tempShapeFillBtnStyle(true)}>shapes filled</button>
+				<button onClick={() => setShapeFill(false)} style={tempShapeFillBtnStyle(false)}>shapes outlined</button>
 			</div>
 			<br />
 			<div style={{ border: 'solid 4px black', height: 640, width: 640 }}>
