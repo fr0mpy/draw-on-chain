@@ -418,10 +418,12 @@ const Canvas: React.FC = () => {
 				<button onClick={() => setShapeFill(false)} style={tempShapeFillBtnStyle(false)}>shapes outlined</button>
 			</div>
 			<br />
-			<div style={{ border: 'solid 4px black', height: 640, width: 640 }}>
-				<canvas id={'canvas'} />
+			<div style={{ display: 'flex', flexFlow: 'row' }}>
+				<div style={{ border: 'solid 4px black', height: 640, width: 640 }}>
+					<canvas id={'canvas'} />
+				</div>
+				{<ColorPicker setColor={handleBrushColor} color={brushColor} />}
 			</div>
-			{<ColorPicker setColor={handleBrushColor} color={brushColor} />}
 		</>
 	)
 }

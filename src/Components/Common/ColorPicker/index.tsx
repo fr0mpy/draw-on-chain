@@ -16,18 +16,19 @@ export const ColorPicker: React.FC<IProps> = ({ color, setColor }) => {
 		handleLoadColors();
 	}, []);
 
-	const buttonStyle = (bgColor: string) => {
+	const buttonStyle = (bgColor: string, selected: boolean) => {
 		return {
 			height: '48px',
 			width: '48px',
-			backgroundColor: bgColor
+			backgroundColor: bgColor,
+			border: selected ? '4px solid cyan' : ''
 		}
 	}
 	const renderColors = () => {
 		return colors.map((color, i) => {
 			return (
 				<button
-					style={buttonStyle(color)}
+					style={buttonStyle(color, currentColorIndex === i)}
 					onClick={() => {
 						setCurrentColorIndex(i);
 						setColor(color);
@@ -70,21 +71,22 @@ export const ColorPicker: React.FC<IProps> = ({ color, setColor }) => {
 	}
 
 	const handleRemoveColor = () => {
-		const newColorIndex = currentColorIndex - 1 <= 0 ? 0 : + 1;
-		setColor(colors[newColorIndex]);
 		const updatedColors = colors.filter((c, i) => i !== currentColorIndex);
 		setColors(updatedColors);
+		setColor(updatedColors[currentColorIndex]);
 		handleSaveColors();
 	}
 
 	return (
-		<>
-			{loaded && renderColors()}
+		<div style={{ display: 'flex', flexFlow: 'column' }}>
+			<div style={{ display: 'flex', flexFlow: 'row' }}>
+				{loaded && renderColors()}
+			</div>
 			<button onClick={handleNewColor}>+ add +</button>
 			<div>
 				{colors.length > 1 ? <button onClick={handleRemoveColor}>X</button> : null}
 				<HexColorPicker color={color} onChange={(color) => handleColorUpdate(color)} />;
 			</div>
-		</>
+		</div>
 	)
 }
