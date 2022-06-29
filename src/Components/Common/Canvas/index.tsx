@@ -144,15 +144,21 @@ const Canvas: React.FC = () => {
 	}
 
 	const handleClear = () => {
-		if (!canvasRef.current) return;
 
-		canvasRef.current.getObjects().forEach(o => {
-			// if (o !== canvasRef.current?.backgroundImage) {
-			canvasRef.current?.remove(o);
-			// }
-		})
+		const isConfirmed = window.confirm('Are you sure? This will completely reset the canvas and save state');
 
-		localStorage.removeItem('canvasData');
+		if (!canvasRef.current || !isConfirmed) return;
+
+		else if (isConfirmed) {
+			canvasRef.current.getObjects().forEach(o => {
+				// if (o !== canvasRef.current?.backgroundImage) {
+				canvasRef.current?.remove(o);
+				// }
+			})
+
+			localStorage.removeItem('canvasData');
+
+		}
 	}
 
 	const handleToSVG = () => {
