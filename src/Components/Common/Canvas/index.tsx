@@ -1,16 +1,8 @@
 
 import React from 'react'
-import { useDispatch, useSelector } from 'react-redux';
-import { showPencilColorPicker } from '../../../Redux/appSlice';
 import { ColorPicker } from '../PencilColorPicker';
 import FloodFill from 'q-floodfill'
-import { getPixelHexCode } from '../../../helpers/colors';
-import { load, save } from '../../../helpers/localStorage';
-import { pixelAlreadyDrawnOn } from '../../../helpers/canvas';
-import { Tools } from '../../../enums/tools';
 import { fabric } from 'fabric';
-import { render } from '@testing-library/react';
-import { usePrevious } from '../../../hooks/usePrevious';
 import 'fabric-history';
 
 
@@ -18,23 +10,26 @@ const Canvas: React.FC = () => {
 
 	const canvasRef = React.useRef<fabric.Canvas | null>(null);
 	const objRef = React.useRef<fabric.Line | null>(null);
+	const mousedownRef = React.useRef<boolean>(false);
+	const drawingObjRef = React.useRef<boolean>(false);
 
 	const [tool, setTool] = React.useState<string>('draw');
-	const [mouseDown, setMouseDown] = React.useState<boolean>(false);
-	const [drawing, setDrawing] = React.useState<boolean>(false);
 	const [colorPicker, setColorPicker] = React.useState<boolean>(false);
 	const [brushColor, setBrushColor] = React.useState<any>('black');
 	const [brushWidth, setBrushWidth] = React.useState<number>(4);
 	const [walletConnected, setWalletConnected] = React.useState<boolean>(false);
 	const [walletAddress, setWalletAddress] = React.useState<string>('');
-	const [line, setLine] = React.useState<fabric.Line>();
 	const [isDrawingMode, setDrawingMode] = React.useState<boolean>(true);
-
+	const [objectSelection, setObjectSelection] = React.useState<boolean>(false);
+	React.useEffect(() => {
+		if (!canvasRef.current) return;
+		canvasRef.current.isDrawingMode = isDrawingMode;
+		handleLoad();
+	}, []);
 
 	React.useEffect(() => {
 		setCanvas();
-	}, [canvasRef, tool]);
-
+	}, [canvasRef, tool, brushWidth, brushColor, objectSelection]);
 
 	const connectWallet = () => {
 
@@ -45,7 +40,6 @@ const Canvas: React.FC = () => {
 				(window as any).userWalletAddress = account;
 				setWalletConnected(true);
 				setWalletAddress(account);
-				console.log('3')
 
 			});
 		} else {
@@ -54,58 +48,69 @@ const Canvas: React.FC = () => {
 
 	}
 
+	// Add: triangles, squares, circles.
+
 	const setCanvas = () => {
 		if (!canvasRef.current) {
 			canvasRef.current = new fabric.Canvas('canvas', { width: 640, height: 640, backgroundColor: 'white' });
-
 			canvasRef.current.renderAll();
-
 		}
+
+		canvasRef.current.forEachObject(o => { o.selectable = objectSelection; o.evented = objectSelection });
 		canvasRef.current.freeDrawingBrush.width = brushWidth;
-		canvasRef.current.freeDrawingBrush.color = brushColor;
-		canvasRef.current.isDrawingMode = isDrawingMode;
+		canvasRef.current.freeDrawingBrush.color = tool === 'erase' ? 'white' : brushColor;
 
 		canvasRef.current.on('mouse:down', (e) => {
-			setMouseDown(true);
 
 			if (!canvasRef.current) return;
+			mousedownRef.current = true;
 
 			switch (tool) {
 				case 'line':
-					if (!e.pointer) return;
+					if (!e.pointer || !drawingObjRef.current) return;
+					canvasRef.current.selection = objectSelection;
 
 					objRef.current = new fabric.Line(
-						[e.pointer?.x, e.pointer?.y, e.pointer?.x + 100, e.pointer.y + 100],
-						{ stroke: brushColor, strokeWidth: brushWidth }
+						[e.pointer?.x, e.pointer?.y, e.pointer?.x, e.pointer.y],
+						{ stroke: brushColor, strokeWidth: brushWidth, selectable: objectSelection, evented: objectSelection }
 					)
 					canvasRef.current.add(objRef.current);
+					canvasRef.current.renderAll();
+					break;
+				case 'select':
 					break;
 				default:
 					return;
 			}
 
 		});
-		canvasRef.current.on('mouse:move', (e) => {
-			if (!mouseDown) return;
 
+		canvasRef.current.on('mouse:move', (e) => {
+			if (!mousedownRef.current) return;
 			switch (tool) {
 				case 'draw':
-					if (!canvasRef.current) return;
-					// canvasRef.current.isDrawingMode = true;
-					// canvasRef.current.renderAll();
 					break;
 				case 'erase':
-					if (!canvasRef.current) return;
-					// canvasRef.current.isDrawingMode = true;
-					// canvasRef.current.renderAll();
+					break;
+				case 'line':
+					if (!canvasRef.current || !objRef.current || !e.pointer || !drawingObjRef.current) return;
+					objRef.current.set({
+						x2: e.pointer.x,
+						y2: e.pointer.y
+					});
+					objRef.current.setCoords();
+					canvasRef.current.renderAll();
+					break;
+				case 'select':
 					break;
 				default:
 					if (!canvasRef.current) return;
-					return canvasRef.current.isDrawingMode === false;
 			}
 		});
 		canvasRef.current.on('mouse:up', () => {
-			setMouseDown(false);
+			mousedownRef.current = false;
+			objRef.current = null;
+			handleSave();
 		});
 	}
 
@@ -124,15 +129,16 @@ const Canvas: React.FC = () => {
 	const handleDraw = () => {
 
 		if (!canvasRef.current) return;
-
+		drawingObjRef.current = false;
 		if (tool === 'draw') {
-			setDrawingMode(false);
+			canvasRef.current.isDrawingMode = false;
 			setTool('')
 		}
 
 		else {
-			setDrawingMode(true);
-			setBrushColor('black');
+			canvasRef.current.isDrawingMode = true;
+			objRef.current = null;
+			setBrushColor(brushColor);
 			setTool('draw');
 		}
 	}
@@ -141,10 +147,12 @@ const Canvas: React.FC = () => {
 		if (!canvasRef.current) return;
 
 		canvasRef.current.getObjects().forEach(o => {
-			if (o !== canvasRef.current?.backgroundImage) {
-				canvasRef.current?.remove(o);
-			}
+			// if (o !== canvasRef.current?.backgroundImage) {
+			canvasRef.current?.remove(o);
+			// }
 		})
+
+		localStorage.removeItem('canvasData');
 	}
 
 	const handleToSVG = () => {
@@ -156,17 +164,17 @@ const Canvas: React.FC = () => {
 	const handleErase = () => {
 
 		if (!canvasRef.current) return;
-
+		drawingObjRef.current = false;
 		if (tool === 'erase') {
-			setDrawingMode(false);
+			canvasRef.current.isDrawingMode = false;
 			setTool('');
 			setBrushColor('black');
 		}
 
 		else {
-			setDrawingMode(true);
+			canvasRef.current.isDrawingMode = true;
 			setTool('erase')
-			setBrushColor('white')
+			// setBrushColor('white')
 		}
 	}
 
@@ -180,20 +188,60 @@ const Canvas: React.FC = () => {
 		(canvasRef.current as any).redo();
 	}
 
-	/**
-	 * choose bg color
-	 * add image?
-	 */
+	const handleLine = () => {
+		setObjectSelection(false);
+		if (!canvasRef.current) return;
+		canvasRef.current.isDrawingMode = false;
 
-	const tempDrawBtnStyle = { color: tool === 'draw' ? 'white' : 'black', backgroundColor: tool === 'draw' ? 'black' : 'white' }
-	const tempEraseBtnStyle = { color: tool === 'erase' ? 'white' : 'black', backgroundColor: tool === 'erase' ? 'black' : 'white' }
+		if (tool === 'line') {
+			setTool('')
+			drawingObjRef.current = false;
+
+		}
+
+		else {
+			setBrushColor(brushColor);
+			setTool('line');
+			drawingObjRef.current = true;
+		}
+	}
+
+	const handleObjSelection = () => {
+		if (!canvasRef.current) return;
+		canvasRef.current.isDrawingMode = false;
+		drawingObjRef.current = false;
+
+		if (objectSelection) {
+			setObjectSelection(false);
+			setTool('');
+		} else {
+			setTool('select')
+			setObjectSelection(true);
+
+		}
+	}
+
+	const handleSave = () => {
+		if (!canvasRef.current) return;
+		const canvasDataJSON = JSON.stringify(canvasRef.current);
+		localStorage.setItem('canvasData', canvasDataJSON);
+	};
+
+	const handleLoad = () => {
+		const loadedData = localStorage.getItem('canvasData');
+		if (!loadedData || !canvasRef.current) return;
+		canvasRef.current.loadFromJSON(loadedData, () => canvasRef.current?.renderAll())
+	};
+
+	const tempDrawBtnStyle = (toolName: string) => { return { color: tool === toolName ? 'white' : 'black', backgroundColor: tool === toolName ? 'black' : 'white' } }
+	const objSelectionBtnStyle = (selection: boolean) => { return { color: objectSelection === selection ? 'white' : 'black', backgroundColor: objectSelection === selection ? 'black' : 'white' } }
 
 	return (
 		<>
 			<button onClick={connectWallet}>connect</button>
 			<p>{walletConnected && `Connected as ${walletAddress.slice(0, 10)}...`}</p>
 			<div>
-				<button onClick={handleDraw} style={tempDrawBtnStyle}>draw</button>
+				<button onClick={handleDraw} style={tempDrawBtnStyle('draw')}>draw</button>
 				<button onClick={() => setColorPicker(!colorPicker)}>color</button>
 				<label>
 					brush width
@@ -201,12 +249,12 @@ const Canvas: React.FC = () => {
 					<input type="number" min={1} max={100} value={brushWidth} onChange={(e) => handleBrushWidth(Number(e.target.value))} />
 				</label>
 				<button onClick={handleClear}> clear </button>
-				<button onClick={handleErase} style={tempEraseBtnStyle}> erase</button>
+				<button onClick={handleErase} style={tempDrawBtnStyle('erase')}> erase</button>
 				<button onClick={handleToSVG}> to SVG </button>
 				<button onClick={handleUndo}> undo </button>
 				<button onClick={handleRedo}> redo </button>
-
-
+				<button onClick={handleLine} style={tempDrawBtnStyle('line')}> line </button>
+				<button onClick={handleObjSelection} style={tempDrawBtnStyle('select')}> select</button>
 			</div>
 			<br />
 			<div style={{ border: 'solid 4px black', height: 640, width: 640 }}>
