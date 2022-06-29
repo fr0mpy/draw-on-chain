@@ -9,7 +9,7 @@ import 'fabric-history';
 const Canvas: React.FC = () => {
 
 	const canvasRef = React.useRef<fabric.Canvas | null>(null);
-	const objRef = React.useRef<fabric.Line | null>(null);
+	const objRef = React.useRef<fabric.Line | fabric.Triangle | fabric.Circle | fabric.Rect | null>(null);
 	const mousedownRef = React.useRef<boolean>(false);
 	const drawingObjRef = React.useRef<boolean>(false);
 
@@ -26,6 +26,7 @@ const Canvas: React.FC = () => {
 		if (!canvasRef.current) return;
 		canvasRef.current.isDrawingMode = isDrawingMode;
 		handleLoad();
+		loadBrushColor();
 	}, []);
 
 	React.useEffect(() => {
@@ -78,6 +79,28 @@ const Canvas: React.FC = () => {
 					canvasRef.current.add(objRef.current);
 					canvasRef.current.renderAll();
 					break;
+				case 'circle':
+					if (!e.pointer || !drawingObjRef.current) return;
+					canvasRef.current.selection = objectSelection;
+
+					objRef.current = new fabric.Circle(
+						{
+							left: e.pointer.x,
+							top: e.pointer.y,
+							originX: 'left',
+							originY: 'top',
+							radius: e.pointer.x,
+							angle: 0,
+							fill: '',
+							stroke: brushColor,
+							strokeWidth: brushWidth,
+							selectable: objectSelection,
+							evented: objectSelection
+						}
+					)
+					canvasRef.current.add(objRef.current);
+					canvasRef.current.renderAll();
+					break;
 				case 'select':
 					break;
 				default:
@@ -95,12 +118,14 @@ const Canvas: React.FC = () => {
 					break;
 				case 'line':
 					if (!canvasRef.current || !objRef.current || !e.pointer || !drawingObjRef.current) return;
-					objRef.current.set({
+					(objRef.current as fabric.Line).set({
 						x2: e.pointer.x,
 						y2: e.pointer.y
 					});
 					objRef.current.setCoords();
 					canvasRef.current.renderAll();
+					break;
+				case 'circle':
 					break;
 				case 'select':
 					break;
@@ -118,7 +143,7 @@ const Canvas: React.FC = () => {
 	const handleBrushColor = (color: string) => {
 		if (!canvasRef.current) return;
 		canvasRef.current.freeDrawingBrush.color = color;
-		setBrushColor(color)
+		setBrushColor(color);
 	}
 
 	const handleBrushWidth = (width: number) => {
@@ -146,19 +171,18 @@ const Canvas: React.FC = () => {
 
 	const handleClear = () => {
 
-		const isConfirmed = window.confirm('Are you sure? This will completely reset the canvas and save state');
+		const isConfirmed = window.confirm('Are you sure? This will completely reset the canvas, color pallette and save state');
 
 		if (!canvasRef.current || !isConfirmed) return;
 
 		else if (isConfirmed) {
 			canvasRef.current.getObjects().forEach(o => {
-				// if (o !== canvasRef.current?.backgroundImage) {
 				canvasRef.current?.remove(o);
-				// }
 			})
 
 			localStorage.removeItem('canvasData');
-
+			localStorage.removeItem('colorsData');
+			localStorage.removeItem('brushColor');
 		}
 	}
 
@@ -213,6 +237,60 @@ const Canvas: React.FC = () => {
 		}
 	}
 
+	const handleTriangle = () => {
+		setObjectSelection(false);
+		if (!canvasRef.current) return;
+		canvasRef.current.isDrawingMode = false;
+
+		if (tool === 'triangle') {
+			setTool('')
+			drawingObjRef.current = false;
+
+		}
+
+		else {
+			setBrushColor(brushColor);
+			setTool('triangle');
+			drawingObjRef.current = true;
+		}
+	}
+
+	const handleCircle = () => {
+		setObjectSelection(false);
+		if (!canvasRef.current) return;
+		canvasRef.current.isDrawingMode = false;
+
+		if (tool === 'circle') {
+			setTool('')
+			drawingObjRef.current = false;
+
+		}
+
+		else {
+			setBrushColor(brushColor);
+			setTool('circle');
+			drawingObjRef.current = true;
+		}
+	}
+
+	const handleSquare = () => {
+		setObjectSelection(false);
+		if (!canvasRef.current) return;
+		canvasRef.current.isDrawingMode = false;
+
+		if (tool === 'square') {
+			setTool('')
+			drawingObjRef.current = false;
+
+		}
+
+		else {
+			setBrushColor(brushColor);
+			setTool('square');
+			drawingObjRef.current = true;
+		}
+	}
+
 	const handleObjSelection = () => {
 		if (!canvasRef.current) return;
 		canvasRef.current.isDrawingMode = false;
@@ -228,16 +306,25 @@ const Canvas: React.FC = () => {
 		}
 	}
 
+	const loadBrushColor = () => {
+		const loadedBrushColor = localStorage.getItem('brushColor');
+
+		if (!loadedBrushColor) return;
+
+		setBrushColor(loadedBrushColor);
+	}
+
 	const handleSave = () => {
 		if (!canvasRef.current) return;
 		const canvasDataJSON = JSON.stringify(canvasRef.current);
 		localStorage.setItem('canvasData', canvasDataJSON);
+		localStorage.setItem('brushColor', brushColor);
 	};
 
 	const handleLoad = () => {
 		const loadedData = localStorage.getItem('canvasData');
 		if (!loadedData || !canvasRef.current) return;
-		canvasRef.current.loadFromJSON(loadedData, () => canvasRef.current?.renderAll())
+		canvasRef.current.loadFromJSON(loadedData, () => canvasRef.current?.renderAll());
 	};
 
 	const tempDrawBtnStyle = (toolName: string) => { return { color: tool === toolName ? 'white' : 'black', backgroundColor: tool === toolName ? 'black' : 'white' } }
@@ -260,6 +347,9 @@ const Canvas: React.FC = () => {
 				<button onClick={handleUndo}> undo </button>
 				<button onClick={handleRedo}> redo </button>
 				<button onClick={handleLine} style={tempDrawBtnStyle('line')}> line </button>
+				<button onClick={handleTriangle} style={tempDrawBtnStyle('triangle')}> triangle </button>
+				<button onClick={handleCircle} style={tempDrawBtnStyle('circle')}> circle </button>
+				<button onClick={handleSquare} style={tempDrawBtnStyle('square')}> square </button>
 				<button onClick={handleObjSelection} style={tempDrawBtnStyle('select')}> select</button>
 			</div>
 			<br />
