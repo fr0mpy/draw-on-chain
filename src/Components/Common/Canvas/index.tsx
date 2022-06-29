@@ -357,7 +357,6 @@ const Canvas: React.FC = () => {
 				<canvas id={'canvas'} />
 			</div>
 			{<ColorPicker setColor={handleBrushColor} color={brushColor} />}
-			<p>hw</p>
 		</>
 	)
 }

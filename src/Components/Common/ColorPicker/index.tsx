@@ -53,10 +53,10 @@ export const ColorPicker: React.FC<IProps> = ({ color, setColor }) => {
 		localStorage.setItem('colorsData', colorsData);
 	}
 
-	const handleLoadColors = () => {
-		const colorsData = localStorage.getItem('colorsData');
+	const handleLoadColors = async () => {
+		const colorsData = await localStorage.getItem('colorsData');
 
-		if (!colorsData) return;
+		if (!colorsData) return setLoaded(true);
 
 		setColors(JSON.parse(colorsData));
 		setLoaded(true);
