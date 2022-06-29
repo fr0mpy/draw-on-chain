@@ -4,6 +4,8 @@ import { ColorPicker } from '../ColorPicker';
 import FloodFill from 'q-floodfill'
 import { fabric } from 'fabric';
 import 'fabric-history';
+import { useDispatch, useSelector } from 'react-redux';
+import { setSVG, showMintModal } from '../../../Redux/appSlice';
 
 
 const Canvas: React.FC = () => {
@@ -25,6 +27,7 @@ const Canvas: React.FC = () => {
 	const [objectSelection, setObjectSelection] = React.useState<boolean>(false);
 	const [shapeFill, setShapeFill] = React.useState<boolean>(true);
 
+	const dispatch = useDispatch()
 
 	React.useEffect(() => {
 		if (!canvasRef.current) return;
@@ -54,8 +57,9 @@ const Canvas: React.FC = () => {
 
 	}
 
-	// Add: triangles, squares, circles.
-
+	const { showModal: minting } = useSelector((state: any) => {
+		return { showModal: state.app.showModal }
+	})
 	const setCanvas = () => {
 		if (!canvasRef.current) {
 			canvasRef.current = new fabric.Canvas('canvas', { width: 640, height: 640, backgroundColor: 'white' });
@@ -250,8 +254,7 @@ const Canvas: React.FC = () => {
 
 	const handleToSVG = () => {
 		if (!canvasRef.current) return;
-
-		console.log('svg', canvasRef.current.toSVG());
+		dispatch(setSVG(canvasRef.current.toSVG()))
 	}
 
 	const handleErase = () => {
@@ -267,7 +270,6 @@ const Canvas: React.FC = () => {
 		else {
 			canvasRef.current.isDrawingMode = true;
 			setTool('erase')
-			// setBrushColor('white')
 		}
 	}
 
@@ -325,7 +327,6 @@ const Canvas: React.FC = () => {
 		if (tool === 'circle') {
 			setTool('')
 			drawingObjRef.current = false;
-
 		}
 
 		else {
@@ -343,7 +344,6 @@ const Canvas: React.FC = () => {
 		if (tool === 'square') {
 			setTool('')
 			drawingObjRef.current = false;
-
 		}
 
 		else {
@@ -364,7 +364,6 @@ const Canvas: React.FC = () => {
 		} else {
 			setTool('select')
 			setObjectSelection(true);
-
 		}
 	}
 
@@ -389,12 +388,18 @@ const Canvas: React.FC = () => {
 		canvasRef.current.loadFromJSON(loadedData, () => canvasRef.current?.renderAll());
 	};
 
+	const handleMint = () => {
+		handleToSVG();
+		dispatch(showMintModal(true));
+	}
+
 	const tempDrawBtnStyle = (toolName: string) => { return { color: tool === toolName ? 'white' : 'black', backgroundColor: tool === toolName ? 'black' : 'white' } }
 	const tempShapeFillBtnStyle = (fill: boolean) => { return { color: fill === shapeFill ? 'white' : 'black', backgroundColor: fill === shapeFill ? 'black' : 'white' } }
 
 	return (
 		<>
 			<button onClick={connectWallet}>connect</button>
+			<button onClick={handleMint} >mint</button>
 			<p>{walletConnected && `Connected as ${walletAddress.slice(0, 10)}...`}</p>
 			<div>
 				<button onClick={handleDraw} style={tempDrawBtnStyle('draw')}>draw</button>

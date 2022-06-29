@@ -4,21 +4,16 @@ export interface IAppState {
 	value: number;
 	height: number;
 	width: number;
-	pencilColor: string;
-	backgroundColor: string;
-	showPencilColorPicker: boolean;
-	showBackgroundColorPicker: boolean;
-
+	showModal: boolean;
+	SVG: string;
 }
 
 export const initialState: IAppState = {
 	value: 0,
 	height: 22,
 	width: 22,
-	pencilColor: '#000001',
-	backgroundColor: '#FFFFFF',
-	showPencilColorPicker: false,
-	showBackgroundColorPicker: false
+	showModal: false,
+	SVG: ''
 }
 
 export const appSlice = createSlice({
@@ -32,21 +27,27 @@ export const appSlice = createSlice({
 			state.width = action.payload;
 		},
 		updatePencilColor: (state, action: PayloadAction<string>) => {
-			state.pencilColor = action.payload;
+			// state.pencilColor = action.payload;
 		},
 		updateBackgroundColor: (state, action: PayloadAction<string>) => {
-			state.backgroundColor = action.payload;
+			// state.backgroundColor = action.payload;
 		},
 		showPencilColorPicker: (state, action: PayloadAction<boolean>) => {
-			state.showPencilColorPicker = action.payload;
-			state.showBackgroundColorPicker = false;
+			// state.showPencilColorPicker = action.payload;
+			// state.showBackgroundColorPicker = false;
 
 		},
 		showBackgroundColorPicker: (state, action: PayloadAction<boolean>) => {
-			state.showBackgroundColorPicker = action.payload;
-			state.showPencilColorPicker = false;
-
+			// state.showBackgroundColorPicker = action.payload;
+			// state.showPencilColorPicker = false;
 		},
+		showMintModal: (state, action: PayloadAction<boolean>) => {
+			state.showModal = action.payload;
+			console.log('state', state.showModal)
+		},
+		setSVG: (state, action: PayloadAction<string>) => {
+			state.SVG = action.payload;
+		}
 	},
 })
 
@@ -56,7 +57,9 @@ export const {
 	updatePencilColor,
 	updateBackgroundColor,
 	showPencilColorPicker,
-	showBackgroundColorPicker
+	showBackgroundColorPicker,
+	showMintModal,
+	setSVG
 } = appSlice.actions;
 
 export default appSlice.reducer;
