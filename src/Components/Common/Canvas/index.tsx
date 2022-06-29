@@ -1,6 +1,6 @@
 
 import React from 'react'
-import { ColorPicker } from '../PencilColorPicker';
+import { ColorPicker } from '../ColorPicker';
 import FloodFill from 'q-floodfill'
 import { fabric } from 'fabric';
 import 'fabric-history';
@@ -21,6 +21,7 @@ const Canvas: React.FC = () => {
 	const [walletAddress, setWalletAddress] = React.useState<string>('');
 	const [isDrawingMode, setDrawingMode] = React.useState<boolean>(true);
 	const [objectSelection, setObjectSelection] = React.useState<boolean>(false);
+
 	React.useEffect(() => {
 		if (!canvasRef.current) return;
 		canvasRef.current.isDrawingMode = isDrawingMode;
@@ -240,7 +241,6 @@ const Canvas: React.FC = () => {
 	};
 
 	const tempDrawBtnStyle = (toolName: string) => { return { color: tool === toolName ? 'white' : 'black', backgroundColor: tool === toolName ? 'black' : 'white' } }
-	const objSelectionBtnStyle = (selection: boolean) => { return { color: objectSelection === selection ? 'white' : 'black', backgroundColor: objectSelection === selection ? 'black' : 'white' } }
 
 	return (
 		<>
