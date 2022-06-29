@@ -106,6 +106,25 @@ const Canvas: React.FC = () => {
 					canvasRef.current.add(objRef.current);
 					canvasRef.current.renderAll();
 					break;
+				case 'square':
+					if (!e.pointer || !drawingObjRef.current || !objOriginRef.current) return;
+					objOriginRef.current = { x: e.pointer.x, y: e.pointer.y };
+
+					objRef.current = new fabric.Rect({
+						left: objOriginRef.current.x,
+						top: objOriginRef.current.y,
+						originX: 'left',
+						originY: 'top',
+						width: e.pointer.x - objOriginRef.current.x,
+						height: e.pointer.y - objOriginRef.current.y,
+						angle: 0,
+						fill: shapeFill ? brushColor : '',
+						transparentCorners: false,
+						stroke: brushColor,
+						strokeWidth: brushWidth
+					});
+					canvasRef.current.add(objRef.current);
+					break;
 				case 'select':
 					break;
 				default:
@@ -154,6 +173,21 @@ const Canvas: React.FC = () => {
 
 					canvasRef.current.renderAll();
 					break;
+				case 'square':
+					if (!canvasRef.current || !e.pointer || !objRef.current) return;
+
+					if (objOriginRef.current.x > e.pointer.x) {
+						(objRef.current as fabric.Rect).set({ left: Math.abs(e.pointer.x) });
+					}
+					if (objOriginRef.current.y > e.pointer.y) {
+						(objRef.current as fabric.Rect).set({ top: Math.abs(e.pointer.y) });
+					}
+
+					(objRef.current as fabric.Rect).set({ width: Math.abs(objOriginRef.current.x - e.pointer.x) });
+					(objRef.current as fabric.Rect).set({ height: Math.abs(objOriginRef.current.y - e.pointer.y) });
+
+					canvasRef.current.renderAll();
+					break;
 				case 'select':
 					break;
 				default:
@@ -164,6 +198,7 @@ const Canvas: React.FC = () => {
 			mousedownRef.current = false;
 			objRef.current = null;
 			handleSave();
+			objOriginRef.current = { x: 0, y: 0 };
 		});
 	}
 
@@ -379,7 +414,7 @@ const Canvas: React.FC = () => {
 				<button onClick={handleCircle} style={tempDrawBtnStyle('circle')}> circle </button>
 				<button onClick={handleSquare} style={tempDrawBtnStyle('square')}> square </button>
 				<button onClick={handleObjSelection} style={tempDrawBtnStyle('select')}> select</button>
-				<button onClick={() => setShapeFill(false)} style={tempShapeFillBtnStyle(true)}>shapes filled</button>
+				<button onClick={() => setShapeFill(true)} style={tempShapeFillBtnStyle(true)}>shapes filled</button>
 				<button onClick={() => setShapeFill(false)} style={tempShapeFillBtnStyle(false)}>shapes outlined</button>
 			</div>
 			<br />
