@@ -396,6 +396,12 @@ const Canvas: React.FC = () => {
 	const tempDrawBtnStyle = (toolName: string) => { return { color: tool === toolName ? 'white' : 'black', backgroundColor: tool === toolName ? 'black' : 'white' } }
 	const tempShapeFillBtnStyle = (fill: boolean) => { return { color: fill === shapeFill ? 'white' : 'black', backgroundColor: fill === shapeFill ? 'black' : 'white' } }
 
+	/* TODO:
+		- finish mint form
+		- add text
+		- add image
+		- set BG color
+	*/
 	return (
 		<>
 			<button onClick={connectWallet}>connect</button>
@@ -419,6 +425,7 @@ const Canvas: React.FC = () => {
 				<button onClick={handleCircle} style={tempDrawBtnStyle('circle')}> circle </button>
 				<button onClick={handleSquare} style={tempDrawBtnStyle('square')}> square </button>
 				<button onClick={handleObjSelection} style={tempDrawBtnStyle('select')}> select</button>
+				<button>text</button>
 				<button onClick={() => setShapeFill(true)} style={tempShapeFillBtnStyle(true)}>shapes filled</button>
 				<button onClick={() => setShapeFill(false)} style={tempShapeFillBtnStyle(false)}>shapes outlined</button>
 			</div>
