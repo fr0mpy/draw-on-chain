@@ -393,6 +393,14 @@ const Canvas: React.FC = () => {
 		dispatch(showMintModal(true));
 	}
 
+	const handleImage = () => {
+		if (!canvasRef.current) return;
+
+		fabric.Image.fromURL('', (img: fabric.Image) => {
+			canvasRef.current?.add(img);
+		})
+	}
+
 	const tempDrawBtnStyle = (toolName: string) => { return { color: tool === toolName ? 'white' : 'black', backgroundColor: tool === toolName ? 'black' : 'white' } }
 	const tempShapeFillBtnStyle = (fill: boolean) => { return { color: fill === shapeFill ? 'white' : 'black', backgroundColor: fill === shapeFill ? 'black' : 'white' } }
 
@@ -424,6 +432,8 @@ const Canvas: React.FC = () => {
 				<button onClick={handleTriangle} style={tempDrawBtnStyle('triangle')}> triangle </button>
 				<button onClick={handleCircle} style={tempDrawBtnStyle('circle')}> circle </button>
 				<button onClick={handleSquare} style={tempDrawBtnStyle('square')}> square </button>
+				<button onClick={handleImage}> image </button>
+
 				<button onClick={handleObjSelection} style={tempDrawBtnStyle('select')}> select</button>
 				<button>text</button>
 				<button onClick={() => setShapeFill(true)} style={tempShapeFillBtnStyle(true)}>shapes filled</button>
