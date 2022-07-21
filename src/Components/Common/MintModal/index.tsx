@@ -7,10 +7,10 @@ export const MintModal = () => {
 
 	const svgContainerRef = React.useRef<HTMLDivElement | null>(null);
 
-	const [traits, setTraits] = React.useState<Array</*{ trait: string, value: string }*/ any>>([]);
+	const [traits, setTraits] = React.useState<Array<{ traitType?: string, value?: string }>>([]);
 	const [name, setName] = React.useState<string>('');
 	const [description, setDescription] = React.useState<string>('');
-	const [numberOfForms, setNumberOfForms] = React.useState<number>(1);
+	const [numberOfTraitForms, setNumberOfTraitForms] = React.useState<number>(1);
 	const [activeFormIndex, setActiveFormIndex] = React.useState<number>(0);
 
 
@@ -49,20 +49,29 @@ export const MintModal = () => {
 	 if there is formData[activeFormIndex] then replace the formData at that index
 	*/
 
+	/*
+	FE mint function sends
+	SVG string
+	Name: string
+	Description: string
+	Traits?: [{traitType: string, value: string}]
+*/
+
 	const renderForms = () => {
-		return [...Array(numberOfForms)].map((_, i) => {
+		return [...Array(numberOfTraitForms)].map((_, i) => {
 			return (
 				<div onClick={() => setActiveFormIndex(i)}>
-					<input type={'text'} value={traits[i] ? traits[i].traitName : ''} placeholder={'Trait Name'} name={'traitName'} onChange={(e) => handleOnChange(e, i)} />
-					<input type={'text'} value={traits[i] ? traits[i].traitValue : ''} placeholder={'Trait Value'} name={'traitValue'} onChange={(e) => handleOnChange(e, i)} />
+					<input type={'text'} value={traits[i] ? traits[i].traitType : ''} placeholder={'Trait Name'} name={'traitType'} onChange={(e) => handleChange(e, i)} />
+					<input type={'text'} value={traits[i] ? traits[i].value : ''} placeholder={'Trait Value'} name={'value'} onChange={(e) => handleChange(e, i)} />
 					<button onClick={() => handleRemoveTrait(i)}>X</button>
 				</div>
 			)
 		})
 	}
 
-	const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+	const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
 		if (traits[index]) {
+			console.log('exists')
 			const updatedTraits = traits.map((trait, i) => {
 				if (activeFormIndex === i) {
 					Object.assign(trait, { [e.target.name]: e.target.value })
@@ -77,9 +86,14 @@ export const MintModal = () => {
 		}
 	}
 
-	const handleRemoveTrait = (index: number) => {
+
+	const handleRemoveTrait = (index: number): void => {
 		setTraits(traits.filter((_, i) => index !== i));
-		setNumberOfForms(numberOfForms - 1);
+		setNumberOfTraitForms(numberOfTraitForms - 1);
+	}
+
+	const handleMint = (): void => {
+		console.log(name, description, traits)
 	}
 
 	return (
@@ -106,7 +120,13 @@ export const MintModal = () => {
 					<input type={'text'} value={description} placeholder={'Description'} onChange={(e) => setDescription(e.target.value)} />
 				</label>
 				{renderForms()}
-				<button onClick={() => setNumberOfForms(numberOfForms + 1)}>+ add another trait +</button>
+				{numberOfTraitForms < 10
+					? <button onClick={() => setNumberOfTraitForms(numberOfTraitForms + 1)}>{numberOfTraitForms < 1 ? '+ add a trait +' : '+ add another trait +'}</button>
+					: null
+				}
+				<br />
+				<br />
+				<button onClick={handleMint}>Mint</button>
 			</div>
 		</div>
 	)
