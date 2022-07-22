@@ -40,6 +40,10 @@ const Canvas: React.FC = () => {
 		setCanvas();
 	}, [canvasRef, tool, brushWidth, brushColor, objectSelection, shapeFill]);
 
+	const { showModal: minting } = useSelector((state: any) => {
+		return { showModal: state.app.showModal }
+	});
+
 	const connectWallet = () => {
 
 		if ((window as any).ethereum) {
@@ -57,9 +61,6 @@ const Canvas: React.FC = () => {
 
 	}
 
-	const { showModal: minting } = useSelector((state: any) => {
-		return { showModal: state.app.showModal }
-	})
 	const setCanvas = () => {
 		if (!canvasRef.current) {
 			canvasRef.current = new fabric.Canvas('canvas', { width: 640, height: 640, backgroundColor: 'white' });
