@@ -97,6 +97,13 @@ export const MintModal = () => {
 	}
 
 	const handleMint = (): void => {
+		if (!name || !description) {
+			if (!name && !description) alert('please enter a name & description for your NFT');
+			else if (!name) alert('please enter a name for your NFT');
+			else if (!description) alert('please enter a description for your NFT');
+
+			return;
+		}
 		console.log(
 			name,
 			description,
