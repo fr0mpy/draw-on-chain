@@ -2,12 +2,16 @@ import React from "react";
 import { useDispatch, useSelector } from "react-redux"
 import { showMintModal } from "../../../Redux/appSlice"
 
+interface ITraits {
+	traitType?: string,
+	value?: string
+}
 export const MintModal = () => {
 	const dispatch = useDispatch();
 
 	const svgContainerRef = React.useRef<HTMLDivElement | null>(null);
 
-	const [traits, setTraits] = React.useState<Array<{ traitType?: string, value?: string }>>([]);
+	const [traits, setTraits] = React.useState<Array<ITraits>>([]);
 	const [name, setName] = React.useState<string>('');
 	const [description, setDescription] = React.useState<string>('');
 	const [numberOfTraitForms, setNumberOfTraitForms] = React.useState<number>(1);
@@ -93,7 +97,12 @@ export const MintModal = () => {
 	}
 
 	const handleMint = (): void => {
-		console.log(name, description, traits)
+		console.log(
+			name,
+			description,
+			traits.filter(t => t.traitType && t.value),
+			JSON.stringify(SVG)
+		);
 	}
 
 	return (
