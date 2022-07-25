@@ -1,6 +1,12 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux"
 import { showMintModal } from "../../../Redux/appSlice"
+interface IMetaData {
+	name: string;
+	description: string;
+	image_data: string;
+	attributes: Array<ITraits>
+}
 
 interface ITraits {
 	traitType?: string,
@@ -44,23 +50,6 @@ export const MintModal = () => {
 		return traits.map((trait, i) => trait)
 	}
 
-	/*
-	 render x number of forms
-	 store formsData in array<{trait: '', value: ''}>
-	 when rendering forms, check if there is a value stored in formsData at the forms index and use that
-	 on form click, set active form index
-	 on each forms onChange event if no formData[activeFormIndex] then add new data onto end of formData
-	 if there is formData[activeFormIndex] then replace the formData at that index
-	*/
-
-	/*
-	FE mint function sends
-	SVG string
-	Name: string
-	Description: string
-	Traits?: [{traitType: string, value: string}]
-*/
-
 	const renderForms = () => {
 		return [...Array(numberOfTraitForms)].map((_, i) => {
 			return (
@@ -75,7 +64,6 @@ export const MintModal = () => {
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
 		if (traits[index]) {
-			console.log('exists')
 			const updatedTraits = traits.map((trait, i) => {
 				if (activeFormIndex === i) {
 					Object.assign(trait, { [e.target.name]: e.target.value })
@@ -105,11 +93,18 @@ export const MintModal = () => {
 			return;
 		}
 		console.log(
+			JSON.stringify(handleMetadata())
+		);
+	}
+
+
+	const handleMetadata = (): IMetaData => {
+		return {
 			name,
 			description,
-			traits.filter(t => t.traitType && t.value),
-			JSON.stringify(SVG)
-		);
+			image_data: JSON.stringify(SVG),
+			attributes: traits.filter(t => t.traitType && t.value),
+		}
 	}
 
 	return (
