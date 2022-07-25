@@ -430,11 +430,8 @@ const Canvas: React.FC = () => {
 				<button onClick={handleUndo}> undo </button>
 				<button onClick={handleRedo}> redo </button>
 				<button onClick={handleLine} style={tempDrawBtnStyle('line')}> line </button>
-				<button onClick={handleTriangle} style={tempDrawBtnStyle('triangle')}> triangle </button>
 				<button onClick={handleCircle} style={tempDrawBtnStyle('circle')}> circle </button>
 				<button onClick={handleSquare} style={tempDrawBtnStyle('square')}> square </button>
-				<button onClick={handleImage}> image </button>
-
 				<button onClick={handleObjSelection} style={tempDrawBtnStyle('select')}> select</button>
 				<button>text</button>
 				<button onClick={() => setShapeFill(true)} style={tempShapeFillBtnStyle(true)}>shapes filled</button>
