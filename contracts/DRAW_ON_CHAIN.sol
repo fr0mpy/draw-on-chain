@@ -169,7 +169,7 @@ library Base64 {
     }
 }
 
-contract SwordNft is ERC721, ERC721Enumerable, Ownable {
+contract DRAW_ON_CHAIN is ERC721, ERC721Enumerable, Ownable {
     // mapping(string => bool) private takenNames;
     mapping(uint256 => Token) public tokens;
 
@@ -177,7 +177,7 @@ contract SwordNft is ERC721, ERC721Enumerable, Ownable {
         string metadata;
     }
 
-    constructor() ERC721("Draw On Chain", "DRAWONCHAIN") {}
+    constructor() ERC721("DRAW ON CHAIN", "DRAWONCHAIN") {}
 
     function uint2str(uint256 _i)
         internal
@@ -229,7 +229,7 @@ contract SwordNft is ERC721, ERC721Enumerable, Ownable {
     function mint(
         address to,
         uint256 tokenId,
-        string metadata
+        string memory metadata
     ) public {
         _safeMint(to, tokenId);
         tokens[tokenId] = Token(metadata);
@@ -262,3 +262,38 @@ contract SwordNft is ERC721, ERC721Enumerable, Ownable {
         return string(abi.encodePacked("data:application/json;base64,", json));
     }
 }
+
+/*pragma solidity ^0.8.9;
+
+// Import this file to use console.log
+import "hardhat/console.sol";
+
+contract Lock {
+    uint public unlockTime;
+    address payable public owner;
+
+    event Withdrawal(uint amount, uint when);
+
+    constructor(uint _unlockTime) payable {
+        require(
+            block.timestamp < _unlockTime,
+            "Unlock time should be in the future"
+        );
+
+        unlockTime = _unlockTime;
+        owner = payable(msg.sender);
+    }
+
+    function withdraw() public {
+        // Uncomment this line to print a log in your terminal
+        // console.log("Unlock time is %o and block timestamp is %o", unlockTime, block.timestamp);
+
+        require(block.timestamp >= unlockTime, "You can't withdraw yet");
+        require(msg.sender == owner, "You aren't the owner");
+
+        emit Withdrawal(address(this).balance, block.timestamp);
+
+        owner.transfer(address(this).balance);
+    }
+}
+ */
