@@ -1,6 +1,8 @@
+import { ethers } from "hardhat";
 import React from "react";
-import { useDispatch, useSelector } from "react-redux"
-import { showMintModal } from "../../../Redux/appSlice"
+import { useDispatch, useSelector } from "react-redux";
+import { showMintModal } from "../../../Redux/appSlice";
+import DRAWONCHAIN from './artifacts/contracts/DRAW_ON_CHAIN.sol/DRAW_ON_CHAIN.json'
 interface IMetaData {
 	name: string;
 	description: string;
@@ -85,6 +87,9 @@ export const MintModal = () => {
 	}
 
 	const handleMint = (): void => {
+
+		if (!(window as any).ethereum) return;
+
 		if (!name || !description) {
 			if (!name && !description) alert('please enter a name & description for your NFT');
 			else if (!name) alert('please enter a name for your NFT');
@@ -92,6 +97,8 @@ export const MintModal = () => {
 
 			return;
 		}
+		const provider = new ethers.providers.Web3Provider((window as any).ethereum);
+		const contract = new ethers.Contract('0x5FbDB2315678afecb367f032d93F642f64180aa3', '', provider)
 		console.log(
 			JSON.stringify(handleMetadata())
 		);
