@@ -1,8 +1,8 @@
-import { ethers } from "hardhat";
+import { ethers } from "ethers";
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { showMintModal } from "../../../Redux/appSlice";
-import DRAWONCHAIN from './artifacts/contracts/DRAW_ON_CHAIN.sol/DRAW_ON_CHAIN.json'
+import contractABI from '../../../artifacts/contracts/DRAW_ON_CHAIN.sol/DRAW_ON_CHAIN.json';
 interface IMetaData {
 	name: string;
 	description: string;
@@ -44,8 +44,12 @@ export const MintModal = () => {
 		}
 	}, [activeFormIndex]);
 
-	const { SVG } = useSelector((state: any) => {
-		return { SVG: state.app.SVG }
+	const { SVG, walletAddress, contractAddress } = useSelector((state: any) => {
+		return {
+			SVG: state.app.SVG,
+			walletAddress: state.app.walletAddress,
+			contractAddress: state.app.contractAddress
+		}
 	});
 
 	const updateTraits = () => {
@@ -86,7 +90,7 @@ export const MintModal = () => {
 		setNumberOfTraitForms(numberOfTraitForms - 1);
 	}
 
-	const handleMint = (): void => {
+	const handleMint = async () => {
 
 		if (!(window as any).ethereum) return;
 
@@ -97,19 +101,21 @@ export const MintModal = () => {
 
 			return;
 		}
-		const provider = new ethers.providers.Web3Provider((window as any).ethereum);
-		const contract = new ethers.Contract('0x5FbDB2315678afecb367f032d93F642f64180aa3', '', provider)
-		console.log(
-			JSON.stringify(handleMetadata())
-		);
-	}
 
+		const provider = new ethers.providers.Web3Provider((window as any).ethereum);
+		const signer = provider.getSigner();
+		const contract = new ethers.Contract(contractAddress, contractABI.abi, signer)
+		contract.mint(walletAddress, JSON.stringify(handleMetadata()));
+
+		// const transaction = await contract.mint(numberOfMints, { value: utils.parseEther(`${numberOfMints * 0.01}`) });
+		// await transaction.wait();
+	}
 
 	const handleMetadata = (): IMetaData => {
 		return {
 			name,
 			description,
-			image_data: JSON.stringify(SVG),
+			image_data: SVG,
 			attributes: traits.filter(t => t.traitType && t.value),
 		}
 	}

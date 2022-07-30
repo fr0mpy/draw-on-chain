@@ -1,11 +1,12 @@
 
 import React from 'react'
 import { ColorPicker } from '../ColorPicker';
-import FloodFill from 'q-floodfill'
 import { fabric } from 'fabric';
 import 'fabric-history';
 import { useDispatch, useSelector } from 'react-redux';
-import { setSVG, showMintModal } from '../../../Redux/appSlice';
+import { setSVG, showMintModal, updateWalletAddress } from '../../../Redux/appSlice';
+import { ethers } from 'ethers';
+import contractABI from '../../../artifacts/contracts/DRAW_ON_CHAIN.sol/DRAW_ON_CHAIN.json';
 
 
 const Canvas: React.FC = () => {
@@ -22,7 +23,6 @@ const Canvas: React.FC = () => {
 	const [brushColor, setBrushColor] = React.useState<any>('black');
 	const [brushWidth, setBrushWidth] = React.useState<number>(4);
 	const [walletConnected, setWalletConnected] = React.useState<boolean>(false);
-	const [walletAddress, setWalletAddress] = React.useState<string>('');
 	const [isDrawingMode, setDrawingMode] = React.useState<boolean>(true);
 	const [objectSelection, setObjectSelection] = React.useState<boolean>(false);
 	const [shapeFill, setShapeFill] = React.useState<boolean>(true);
@@ -40,8 +40,12 @@ const Canvas: React.FC = () => {
 		setCanvas();
 	}, [canvasRef, tool, brushWidth, brushColor, objectSelection, shapeFill]);
 
-	const { showModal: minting } = useSelector((state: any) => {
-		return { showModal: state.app.showModal }
+	const { showModal: minting, walletAddress, contractAddress } = useSelector((state: any) => {
+		return {
+			showModal: state.app.showModal,
+			walletAddress: state.app.walletAddress,
+			contractAddress: state.app.contractAddress
+		}
 	});
 
 	const connectWallet = () => {
@@ -52,7 +56,7 @@ const Canvas: React.FC = () => {
 				const [account] = accounts;
 				(window as any).userWalletAddress = account;
 				setWalletConnected(true);
-				setWalletAddress(account);
+				dispatch(updateWalletAddress(account))
 
 			});
 		} else {
@@ -140,7 +144,7 @@ const Canvas: React.FC = () => {
 
 		canvasRef.current.on('mouse:move', (e) => {
 			if (!mousedownRef.current) return;
-
+			console.log('drawing')
 			switch (tool) {
 				case 'draw':
 					break;
@@ -255,7 +259,9 @@ const Canvas: React.FC = () => {
 
 	const handleToSVG = () => {
 		if (!canvasRef.current) return;
-		dispatch(setSVG(canvasRef.current.toSVG()))
+		const trimmedSVG = canvasRef.current.toSVG().split('>').slice(2, canvasRef.current.toSVG().split('>').length).join('>');
+		console.log(trimmedSVG)
+		dispatch(setSVG(trimmedSVG));
 	}
 
 	const handleErase = () => {
@@ -405,12 +411,22 @@ const Canvas: React.FC = () => {
 	const tempDrawBtnStyle = (toolName: string) => { return { color: tool === toolName ? 'white' : 'black', backgroundColor: tool === toolName ? 'black' : 'white' } }
 	const tempShapeFillBtnStyle = (fill: boolean) => { return { color: fill === shapeFill ? 'white' : 'black', backgroundColor: fill === shapeFill ? 'black' : 'white' } }
 
-	/* TODO:
-		- finish mint form
-		- add text
-		- add image
-		- set BG color
-	*/
+	const getTokenURI = async () => {
+		const provider = new ethers.providers.Web3Provider((window as any).ethereum);
+		const contract = new ethers.Contract(contractAddress, contractABI.abi, provider)
+		const token = await contract.tokenURI(0)
+		console.log("TOKEN:", token);
+	}
+
+	const getTokenMetadata = async () => {
+		console.log('getting metadata')
+		const provider = new ethers.providers.Web3Provider((window as any).ethereum);
+		const contract = new ethers.Contract(contractAddress, contractABI.abi, provider)
+		const token = await contract.getTokenMetaData(0)
+		console.log("TOKEN:", token);
+	}
+
+
 	return (
 		<>
 			<button onClick={connectWallet}>connect</button>
@@ -436,6 +452,7 @@ const Canvas: React.FC = () => {
 				<button>text</button>
 				<button onClick={() => setShapeFill(true)} style={tempShapeFillBtnStyle(true)}>shapes filled</button>
 				<button onClick={() => setShapeFill(false)} style={tempShapeFillBtnStyle(false)}>shapes outlined</button>
+				<button onClick={() => getTokenMetadata()}>get token</button>
 			</div>
 			<br />
 			<div style={{ display: 'flex', flexFlow: 'row' }}>

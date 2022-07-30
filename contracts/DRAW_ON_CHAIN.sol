@@ -173,6 +173,9 @@ contract DRAW_ON_CHAIN is ERC721, ERC721Enumerable, Ownable {
     // mapping(string => bool) private takenNames;
     mapping(uint256 => Token) public tokens;
 
+    uint256 numberOfTokensCreated = 0;
+    uint256 numberOfTokensBurned = 0;
+
     struct Token {
         string metadata;
     }
@@ -226,28 +229,37 @@ contract DRAW_ON_CHAIN is ERC721, ERC721Enumerable, Ownable {
         return super.supportsInterface(interfaceId);
     }
 
-    function mint(
-        address to,
-        uint256 tokenId,
-        string memory metadata
-    ) public {
-        _safeMint(to, tokenId);
-        tokens[tokenId] = Token(metadata);
-
-        /*
-         * Burn token
-         * Return token of specified ID
-         * Number of tokens
-         * Wallet Holds NFT / How many they hold
-         * Withdraw funds
-         * Number of tokens burned
-         * Number of holders
-         * get all nfts made by 1 address
-         */
+    function mint(address to, string memory metadata) public {
+        _safeMint(to, numberOfTokensCreated);
+        tokens[numberOfTokensCreated] = Token(metadata);
+        numberOfTokensCreated++;
     }
 
-    function getSvg(uint256 tokenId) private view returns (string memory) {
+    function burnToken(uint256 tokenId) public {
+        if (ownerOf(tokenId) == msg.sender) {
+            _burn(tokenId);
+            numberOfTokensBurned++;
+        }
+    }
+
+    function getTokenMetaData(uint256 tokenId)
+        public
+        view
+        returns (string memory)
+    {
         return tokens[tokenId].metadata;
+    }
+
+    function getNumberOfTokensCreated() public view returns (uint256) {
+        return numberOfTokensCreated;
+    }
+
+    function getNumberOfTokensBurned() public view returns (uint256) {
+        return numberOfTokensBurned;
+    }
+
+    function userBlance() public view returns (uint256) {
+        return balanceOf(msg.sender);
     }
 
     function tokenURI(uint256 tokenId)
@@ -257,43 +269,8 @@ contract DRAW_ON_CHAIN is ERC721, ERC721Enumerable, Ownable {
         returns (string memory)
     {
         string memory json = Base64.encode(
-            bytes(string(abi.encodePacked(tokens[tokenId].metadata)))
+            bytes(string(abi.encodePacked(getTokenMetaData(tokenId))))
         );
         return string(abi.encodePacked("data:application/json;base64,", json));
     }
 }
-
-/*pragma solidity ^0.8.9;
-
-// Import this file to use console.log
-import "hardhat/console.sol";
-
-contract Lock {
-    uint public unlockTime;
-    address payable public owner;
-
-    event Withdrawal(uint amount, uint when);
-
-    constructor(uint _unlockTime) payable {
-        require(
-            block.timestamp < _unlockTime,
-            "Unlock time should be in the future"
-        );
-
-        unlockTime = _unlockTime;
-        owner = payable(msg.sender);
-    }
-
-    function withdraw() public {
-        // Uncomment this line to print a log in your terminal
-        // console.log("Unlock time is %o and block timestamp is %o", unlockTime, block.timestamp);
-
-        require(block.timestamp >= unlockTime, "You can't withdraw yet");
-        require(msg.sender == owner, "You aren't the owner");
-
-        emit Withdrawal(address(this).balance, block.timestamp);
-
-        owner.transfer(address(this).balance);
-    }
-}
- */

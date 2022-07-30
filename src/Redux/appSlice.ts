@@ -6,6 +6,8 @@ export interface IAppState {
 	width: number;
 	showModal: boolean;
 	SVG: string;
+	walletAddress: string;
+	contractAddress: string;
 }
 
 export const initialState: IAppState = {
@@ -13,7 +15,9 @@ export const initialState: IAppState = {
 	height: 22,
 	width: 22,
 	showModal: false,
-	SVG: ''
+	SVG: '',
+	walletAddress: '',
+	contractAddress: '0x412010E39d2825Fb899391c73004d1217fa92BF5'
 }
 
 export const appSlice = createSlice({
@@ -47,6 +51,9 @@ export const appSlice = createSlice({
 		},
 		setSVG: (state, action: PayloadAction<string>) => {
 			state.SVG = action.payload;
+		},
+		updateWalletAddress: (state, action: PayloadAction<string>) => {
+			state.walletAddress = action.payload;
 		}
 	},
 })
@@ -59,7 +66,8 @@ export const {
 	showPencilColorPicker,
 	showBackgroundColorPicker,
 	showMintModal,
-	setSVG
+	setSVG,
+	updateWalletAddress
 } = appSlice.actions;
 
 export default appSlice.reducer;
