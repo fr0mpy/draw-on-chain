@@ -8,6 +8,12 @@ export interface IAppState {
 	SVG: string;
 	walletAddress: string;
 	contractAddress: string;
+	tool: string;
+	brushColor: string;
+	isDrawingMode: boolean;
+	brushWidth: number;
+	shapeFill: boolean;
+	objectSelection: boolean;
 }
 
 export const initialState: IAppState = {
@@ -17,34 +23,19 @@ export const initialState: IAppState = {
 	showModal: false,
 	SVG: '',
 	walletAddress: '',
-	contractAddress: '0x412010E39d2825Fb899391c73004d1217fa92BF5'
+	contractAddress: '0x412010E39d2825Fb899391c73004d1217fa92BF5',
+	tool: 'draw',
+	brushColor: 'black',
+	isDrawingMode: true,
+	brushWidth: 4,
+	shapeFill: true,
+	objectSelection: false
 }
 
 export const appSlice = createSlice({
 	name: 'counter',
 	initialState,
 	reducers: {
-		updateCanvasHeight: (state, action: PayloadAction<number>) => {
-			state.height = action.payload;
-		},
-		updateCanvasWidth: (state, action: PayloadAction<number>) => {
-			state.width = action.payload;
-		},
-		updatePencilColor: (state, action: PayloadAction<string>) => {
-			// state.pencilColor = action.payload;
-		},
-		updateBackgroundColor: (state, action: PayloadAction<string>) => {
-			// state.backgroundColor = action.payload;
-		},
-		showPencilColorPicker: (state, action: PayloadAction<boolean>) => {
-			// state.showPencilColorPicker = action.payload;
-			// state.showBackgroundColorPicker = false;
-
-		},
-		showBackgroundColorPicker: (state, action: PayloadAction<boolean>) => {
-			// state.showBackgroundColorPicker = action.payload;
-			// state.showPencilColorPicker = false;
-		},
 		showMintModal: (state, action: PayloadAction<boolean>) => {
 			state.showModal = action.payload;
 			console.log('state', state.showModal)
@@ -54,20 +45,38 @@ export const appSlice = createSlice({
 		},
 		updateWalletAddress: (state, action: PayloadAction<string>) => {
 			state.walletAddress = action.payload;
+		},
+		setTool: (state, action: PayloadAction<string>) => {
+			state.tool = action.payload
+		},
+		setBrushColor: (state, action: PayloadAction<string>) => {
+			state.brushColor = action.payload
+		},
+		setIsDrawingMode: (state, action: PayloadAction<boolean>) => {
+			state.isDrawingMode = action.payload
+		},
+		setBrushWidth: (state, action: PayloadAction<number>) => {
+			state.brushWidth = action.payload;
+		},
+		setShapeFill: (state, action: PayloadAction<boolean>) => {
+			state.shapeFill = action.payload
+		},
+		setObjectSelection: (state, action: PayloadAction<boolean>) => {
+			state.objectSelection = action.payload;
 		}
 	},
 })
 
 export const {
-	updateCanvasHeight,
-	updateCanvasWidth,
-	updatePencilColor,
-	updateBackgroundColor,
-	showPencilColorPicker,
-	showBackgroundColorPicker,
 	showMintModal,
 	setSVG,
-	updateWalletAddress
+	updateWalletAddress,
+	setTool,
+	setBrushColor,
+	setIsDrawingMode,
+	setBrushWidth,
+	setShapeFill,
+	setObjectSelection
 } = appSlice.actions;
 
 export default appSlice.reducer;

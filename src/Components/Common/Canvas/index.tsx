@@ -1,33 +1,42 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 
 import React from 'react'
-import { ColorPicker } from '../ColorPicker';
 import { fabric } from 'fabric';
-import 'fabric-history';
 import { useDispatch, useSelector } from 'react-redux';
-import { setSVG, showMintModal, updateWalletAddress } from '../../../Redux/appSlice';
-import { ethers } from 'ethers';
-import contractABI from '../../../artifacts/contracts/DRAW_ON_CHAIN.sol/DRAW_ON_CHAIN.json';
+import { setBrushColor } from '../../../Redux/appSlice';
 
+interface IProps {
+	canvasRef: React.MutableRefObject<fabric.Canvas | null>,
+	objRef: React.MutableRefObject<fabric.Line | fabric.Triangle | fabric.Circle | fabric.Rect | null>,
+	objOriginRef: React.MutableRefObject<{ x: number, y: number }>,
+	mousedownRef: React.MutableRefObject<boolean>;
+	drawingObjRef: React.MutableRefObject<boolean>;
+}
 
-const Canvas: React.FC = () => {
+const Canvas: React.FC<IProps> = ({ canvasRef, drawingObjRef, mousedownRef, objOriginRef, objRef }) => {
 
-	const canvasRef = React.useRef<fabric.Canvas | null>(null);
-	const objRef = React.useRef<fabric.Line | fabric.Triangle | fabric.Circle | fabric.Rect | null>(null);
-	const objOriginRef = React.useRef<{ x: number, y: number }>({ x: 0, y: 0 });
+	const dispatch = useDispatch();
 
-	const mousedownRef = React.useRef<boolean>(false);
-	const drawingObjRef = React.useRef<boolean>(false);
-
-	const [tool, setTool] = React.useState<string>('draw');
-	const [colorPicker, setColorPicker] = React.useState<boolean>(false);
-	const [brushColor, setBrushColor] = React.useState<any>('black');
-	const [brushWidth, setBrushWidth] = React.useState<number>(4);
-	const [walletConnected, setWalletConnected] = React.useState<boolean>(false);
-	const [isDrawingMode, setDrawingMode] = React.useState<boolean>(true);
-	const [objectSelection, setObjectSelection] = React.useState<boolean>(false);
-	const [shapeFill, setShapeFill] = React.useState<boolean>(true);
-
-	const dispatch = useDispatch()
+	const {
+		tool,
+		isDrawingMode,
+		brushWidth,
+		objectSelection,
+		brushColor,
+		shapeFill
+	} = useSelector((state: any) => {
+		return {
+			showModal: state.app.showModal,
+			walletAddress: state.app.walletAddress,
+			contractAddress: state.app.contractAddress,
+			tool: state.app.tool,
+			isDrawingMode: state.app.isDrawingMode,
+			brushWidth: state.app.brushWidth,
+			objectSelection: state.app.objectSelection,
+			brushColor: state.app.brushColor,
+			shapeFill: state.app.shapeFill
+		}
+	});
 
 	React.useEffect(() => {
 		if (!canvasRef.current) return;
@@ -38,32 +47,13 @@ const Canvas: React.FC = () => {
 
 	React.useEffect(() => {
 		setCanvas();
-	}, [canvasRef, tool, brushWidth, brushColor, objectSelection, shapeFill]);
-
-	const { showModal: minting, walletAddress, contractAddress } = useSelector((state: any) => {
-		return {
-			showModal: state.app.showModal,
-			walletAddress: state.app.walletAddress,
-			contractAddress: state.app.contractAddress
-		}
-	});
-
-	const connectWallet = () => {
-
-		if ((window as any).ethereum) {
-
-			(window as any).ethereum.request({ method: 'eth_requestAccounts' }).then((accounts: any) => {
-				const [account] = accounts;
-				(window as any).userWalletAddress = account;
-				setWalletConnected(true);
-				dispatch(updateWalletAddress(account))
-
-			});
-		} else {
-			alert('No Web3 Wallet Extension Detected. Please install MetaMask');
-		}
-
-	}
+	}, [
+		canvasRef,
+		tool,
+		brushWidth,
+		brushColor,
+		shapeFill
+	]);
 
 	const setCanvas = () => {
 		if (!canvasRef.current) {
@@ -75,6 +65,7 @@ const Canvas: React.FC = () => {
 		canvasRef.current.freeDrawingBrush.width = brushWidth;
 		canvasRef.current.freeDrawingBrush.color = tool === 'erase' ? 'white' : brushColor;
 
+		console.log('setting canvas', canvasRef.current.freeDrawingBrush.color)
 		canvasRef.current.on('mouse:down', (e) => {
 
 			if (!canvasRef.current) return;
@@ -209,177 +200,14 @@ const Canvas: React.FC = () => {
 			handleSave();
 			objOriginRef.current = { x: 0, y: 0 };
 		});
-	}
-
-	const handleBrushColor = (color: string) => {
-		if (!canvasRef.current) return;
-		canvasRef.current.freeDrawingBrush.color = color;
-		setBrushColor(color);
-	}
-
-	const handleBrushWidth = (width: number) => {
-		if (!canvasRef.current) return;
-		canvasRef.current.freeDrawingBrush.width = width;
-		setBrushWidth(width)
-	}
-
-	const handleDraw = () => {
-
-		if (!canvasRef.current) return;
-		drawingObjRef.current = false;
-		if (tool === 'draw') {
-			canvasRef.current.isDrawingMode = false;
-			setTool('')
-		}
-
-		else {
-			canvasRef.current.isDrawingMode = true;
-			objRef.current = null;
-			setBrushColor(brushColor);
-			setTool('draw');
-		}
-	}
-
-	const handleClear = () => {
-
-		const isConfirmed = window.confirm('Are you sure? This will completely reset the canvas, color pallette and save state');
-
-		if (!canvasRef.current || !isConfirmed) return;
-
-		else if (isConfirmed) {
-			canvasRef.current.getObjects().forEach(o => {
-				canvasRef.current?.remove(o);
-			})
-
-			localStorage.removeItem('canvasData');
-			localStorage.removeItem('colorsData');
-			localStorage.removeItem('brushColor');
-		}
-	}
-
-	const handleToSVG = () => {
-		if (!canvasRef.current) return;
-		const trimmedSVG = canvasRef.current.toSVG().split('>').slice(2, canvasRef.current.toSVG().split('>').length).join('>');
-		console.log(trimmedSVG)
-		dispatch(setSVG(trimmedSVG));
-	}
-
-	const handleErase = () => {
-
-		if (!canvasRef.current) return;
-		drawingObjRef.current = false;
-		if (tool === 'erase') {
-			canvasRef.current.isDrawingMode = false;
-			setTool('');
-			setBrushColor('black');
-		}
-
-		else {
-			canvasRef.current.isDrawingMode = true;
-			setTool('erase')
-		}
-	}
-
-	const handleUndo = () => {
-		if (!canvasRef.current) return;
-		(canvasRef.current as any).undo();
-	}
-
-	const handleRedo = () => {
-		if (!canvasRef.current) return;
-		(canvasRef.current as any).redo();
-	}
-
-	const handleLine = () => {
-		setObjectSelection(false);
-		if (!canvasRef.current) return;
-		canvasRef.current.isDrawingMode = false;
-
-		if (tool === 'line') {
-			setTool('')
-			drawingObjRef.current = false;
-
-		}
-
-		else {
-			setBrushColor(brushColor);
-			setTool('line');
-			drawingObjRef.current = true;
-		}
-	}
-
-	const handleTriangle = () => {
-		setObjectSelection(false);
-		if (!canvasRef.current) return;
-		canvasRef.current.isDrawingMode = false;
-
-		if (tool === 'triangle') {
-			setTool('')
-			drawingObjRef.current = false;
-
-		}
-
-		else {
-			setBrushColor(brushColor);
-			setTool('triangle');
-			drawingObjRef.current = true;
-		}
-	}
-
-	const handleCircle = () => {
-		setObjectSelection(false);
-		if (!canvasRef.current) return;
-		canvasRef.current.isDrawingMode = false;
-
-		if (tool === 'circle') {
-			setTool('')
-			drawingObjRef.current = false;
-		}
-
-		else {
-			setBrushColor(brushColor);
-			setTool('circle');
-			drawingObjRef.current = true;
-		}
-	}
-
-	const handleSquare = () => {
-		setObjectSelection(false);
-		if (!canvasRef.current) return;
-		canvasRef.current.isDrawingMode = false;
-
-		if (tool === 'square') {
-			setTool('')
-			drawingObjRef.current = false;
-		}
-
-		else {
-			setBrushColor(brushColor);
-			setTool('square');
-			drawingObjRef.current = true;
-		}
-	}
-
-	const handleObjSelection = () => {
-		if (!canvasRef.current) return;
-		canvasRef.current.isDrawingMode = false;
-		drawingObjRef.current = false;
-
-		if (objectSelection) {
-			setObjectSelection(false);
-			setTool('');
-		} else {
-			setTool('select')
-			setObjectSelection(true);
-		}
-	}
+	};
 
 	const loadBrushColor = () => {
 		const loadedBrushColor = localStorage.getItem('brushColor');
 
 		if (!loadedBrushColor) return;
 
-		setBrushColor(loadedBrushColor);
+		dispatch(setBrushColor(loadedBrushColor));
 	}
 
 	const handleSave = () => {
@@ -395,71 +223,28 @@ const Canvas: React.FC = () => {
 		canvasRef.current.loadFromJSON(loadedData, () => canvasRef.current?.renderAll());
 	};
 
-	const handleMint = () => {
-		handleToSVG();
-		dispatch(showMintModal(true));
-	}
+	// const getTokenURI = async () => {
+	// 	const provider = new ethers.providers.Web3Provider((window as any).ethereum);
+	// 	const contract = new ethers.Contract(contractAddress, contractABI.abi, provider)
+	// 	const token = await contract.tokenURI(0)
+	// 	console.log("TOKEN:", token);
+	// }
 
-	const handleImage = () => {
-		if (!canvasRef.current) return;
-
-		fabric.Image.fromURL('', (img: fabric.Image) => {
-			canvasRef.current?.add(img);
-		})
-	}
-
-	const tempDrawBtnStyle = (toolName: string) => { return { color: tool === toolName ? 'white' : 'black', backgroundColor: tool === toolName ? 'black' : 'white' } }
-	const tempShapeFillBtnStyle = (fill: boolean) => { return { color: fill === shapeFill ? 'white' : 'black', backgroundColor: fill === shapeFill ? 'black' : 'white' } }
-
-	const getTokenURI = async () => {
-		const provider = new ethers.providers.Web3Provider((window as any).ethereum);
-		const contract = new ethers.Contract(contractAddress, contractABI.abi, provider)
-		const token = await contract.tokenURI(0)
-		console.log("TOKEN:", token);
-	}
-
-	const getTokenMetadata = async () => {
-		console.log('getting metadata')
-		const provider = new ethers.providers.Web3Provider((window as any).ethereum);
-		const contract = new ethers.Contract(contractAddress, contractABI.abi, provider)
-		const token = await contract.getTokenMetaData(0)
-		console.log("TOKEN:", token);
-	}
+	// const getTokenMetadata = async () => {
+	// 	console.log('getting metadata')
+	// 	const provider = new ethers.providers.Web3Provider((window as any).ethereum);
+	// 	const contract = new ethers.Contract(contractAddress, contractABI.abi, provider)
+	// 	const token = await contract.getTokenMetaData(0)
+	// 	console.log("TOKEN:", token);
+	// }
 
 
 	return (
 		<>
-			<button onClick={connectWallet}>connect</button>
-			<button onClick={handleMint} >mint</button>
-			<p>{walletConnected && `Connected as ${walletAddress.slice(0, 10)}...`}</p>
-			<div>
-				<button onClick={handleDraw} style={tempDrawBtnStyle('draw')}>draw</button>
-				<button onClick={() => setColorPicker(!colorPicker)}>color</button>
-				<label>
-					brush width
-					<input type="range" min={1} max={100} value={brushWidth} onChange={(e) => handleBrushWidth(Number(e.target.value))} />
-					<input type="number" min={1} max={100} value={brushWidth} onChange={(e) => handleBrushWidth(Number(e.target.value))} />
-				</label>
-				<button onClick={handleClear}> clear </button>
-				<button onClick={handleErase} style={tempDrawBtnStyle('erase')}> erase</button>
-				<button onClick={handleToSVG}> to SVG </button>
-				<button onClick={handleUndo}> undo </button>
-				<button onClick={handleRedo}> redo </button>
-				<button onClick={handleLine} style={tempDrawBtnStyle('line')}> line </button>
-				<button onClick={handleCircle} style={tempDrawBtnStyle('circle')}> circle </button>
-				<button onClick={handleSquare} style={tempDrawBtnStyle('square')}> square </button>
-				<button onClick={handleObjSelection} style={tempDrawBtnStyle('select')}> select</button>
-				<button>text</button>
-				<button onClick={() => setShapeFill(true)} style={tempShapeFillBtnStyle(true)}>shapes filled</button>
-				<button onClick={() => setShapeFill(false)} style={tempShapeFillBtnStyle(false)}>shapes outlined</button>
-				<button onClick={() => getTokenMetadata()}>get token</button>
-			</div>
-			<br />
 			<div style={{ display: 'flex', flexFlow: 'row' }}>
 				<div style={{ border: 'solid 4px black', height: 640, width: 640 }}>
 					<canvas id={'canvas'} />
 				</div>
-				{<ColorPicker setColor={handleBrushColor} color={brushColor} />}
 			</div>
 		</>
 	)
