@@ -1,5 +1,8 @@
 import React from 'react';
 import { HexColorPicker } from "react-colorful";
+import AddIcon from '@mui/icons-material/Add';
+import { Button, Grid } from '@mui/material';
+import { AddColorButton } from '../Buttons';
 
 
 interface IProps {
@@ -78,14 +81,17 @@ export const ColorPicker: React.FC<IProps> = ({ color, setColor }) => {
 	}
 
 	return (
-		<div style={{ display: 'flex', flexFlow: 'column' }}>
-			<div style={{ display: 'flex', flexFlow: 'row' }}>
-				{loaded && renderColors()}
-			</div>
-			<button onClick={handleNewColor}>+ add +</button>
+		<div style={{ display: 'flex', flexFlow: 'column', paddingLeft: '8px' }}>
+			<Grid container direction={"row"} flexWrap={"wrap"}>
+
+				<div style={{ display: 'flex', flexFlow: 'row' }}>
+					{loaded && renderColors()}
+				</div>
+				<AddColorButton onClick={handleNewColor}><AddIcon fontSize={"large"} /></AddColorButton>
+			</Grid>
 			<div>
 				{colors.length > 1 ? <button onClick={handleRemoveColor}>X</button> : null}
-				<HexColorPicker color={color} onChange={(color) => handleColorUpdate(color)} />;
+				<HexColorPicker color={color} onChange={(color) => handleColorUpdate(color)} />
 			</div>
 		</div>
 	)

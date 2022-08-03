@@ -12,7 +12,7 @@ export interface IAppState {
 	brushColor: string;
 	isDrawingMode: boolean;
 	brushWidth: number;
-	shapeFill: boolean;
+	shapeFill: string;
 	objectSelection: boolean;
 }
 
@@ -28,7 +28,7 @@ export const initialState: IAppState = {
 	brushColor: 'black',
 	isDrawingMode: true,
 	brushWidth: 4,
-	shapeFill: true,
+	shapeFill: 'fill',
 	objectSelection: false
 }
 
@@ -58,7 +58,7 @@ export const appSlice = createSlice({
 		setBrushWidth: (state, action: PayloadAction<number>) => {
 			state.brushWidth = action.payload;
 		},
-		setShapeFill: (state, action: PayloadAction<boolean>) => {
+		setShapeFill: (state, action: PayloadAction<string>) => {
 			state.shapeFill = action.payload
 		},
 		setObjectSelection: (state, action: PayloadAction<boolean>) => {

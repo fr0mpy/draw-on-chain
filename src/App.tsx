@@ -1,12 +1,13 @@
 import Canvas from "./Components/Common/Canvas";
-// import InitializePixelSize from './Components/Common/InitializePixelSize';
 
 import * as React from 'react';
 import { MintModal } from "./Components/Common/MintModal";
 import { useSelector } from "react-redux";
-import Grid from "@mui/material/Grid/Grid";
-import RightSideMenu from "./Components/Common/RightSideMenu";
-
+import CanvasTools from "./Components/Common/CanvasTools";
+import DesktopLayout from "./Components/Layout/DesktopLayout";
+// import Navigation from "./Components/Common/Navigation";
+import ThemeProvider from "@mui/material/styles/ThemeProvider";
+import { theme } from './Theme'
 function App() {
 
 
@@ -23,31 +24,26 @@ function App() {
 
 	return (
 		<>
-			<Grid container >
-				<h1>Draw On Chain (Beta)</h1>
-				<Grid container direction={"row"}>
-					<Grid item xs={8}>
-						<Canvas
-							canvasRef={canvasRef}
-							objRef={objRef}
-							objOriginRef={objOriginRef}
-							mousedownRef={mousedownRef}
-							drawingObjRef={drawingObjRef}
-						/>
-					</Grid>
-					<Grid item xs={4}>
-						<RightSideMenu
-							canvasRef={canvasRef}
-							objRef={objRef}
-							objOriginRef={objOriginRef}
-							mousedownRef={mousedownRef}
-							drawingObjRef={drawingObjRef}
-						/>
-					</Grid>
-				</Grid>
-
-			</Grid>
-			{showModal && <MintModal />}
+			<ThemeProvider theme={theme}>
+				<DesktopLayout
+					// left={ }
+					middle={<Canvas
+						canvasRef={canvasRef}
+						objRef={objRef}
+						objOriginRef={objOriginRef}
+						mousedownRef={mousedownRef}
+						drawingObjRef={drawingObjRef}
+					/>}
+					right={<CanvasTools
+						canvasRef={canvasRef}
+						objRef={objRef}
+						objOriginRef={objOriginRef}
+						mousedownRef={mousedownRef}
+						drawingObjRef={drawingObjRef}
+					/>}
+				/>
+				{showModal && <MintModal />}
+			</ThemeProvider>
 		</>
 	);
 }
